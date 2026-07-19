@@ -1796,18 +1796,35 @@ Gondhorbomadan chotpot uthe bollo, “Sir, amader bari-te ami shoptahe 15-ta tha
 
     <button class="back-to-top" id="backToTop" aria-label="Back to top">&#8593;</button>
 
+    <script src="js/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
     <script>
-      renderMathInElement(document.body, {
+      // Render math lazily per chapter instead of walking the entire 1811-line
+      // document.body synchronously on load -- that single blocking call was
+      // responsible for ~3.4s of main-thread work and 8 "long tasks" in
+      // PageSpeed's mobile audit (Performance 49), and is the likely root
+      // cause of the intermittent "Can't open this page" nav bug on iOS
+      // Chrome. Rendering each chapter only as it nears the viewport spreads
+      // that cost out over the scroll session instead of paying it all at
+      // once on page load.
+      const katexOptions = {
         delimiters: [
           {left: '$$', right: '$$', display: true},
           {left: '\\[', right: '\\]', display: true},
           {left: '$',  right: '$',  display: false}
         ],
         throwOnError: false
-      });
+      };
+      const mathObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            renderMathInElement(entry.target, katexOptions);
+            mathObserver.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: '600px 0px' });
+      document.querySelectorAll('.topic-slab').forEach(el => mathObserver.observe(el));
     </script>
-    <script src="js/main.js"></script>
 </body>
 </html>
