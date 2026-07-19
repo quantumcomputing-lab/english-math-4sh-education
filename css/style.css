@@ -65,12 +65,16 @@ a   { text-decoration: none; color: inherit; }
    HEADER
 ═══════════════════════════════════════════ */
 .site-header {
+    /* backdrop-filter removed: combining it with position:fixed on the same
+       element is a known Chromium bug class (mis-sized/mis-positioned fixed
+       containing block, especially on Android Chrome and in Chromium's
+       mobile-emulation mode) -- confirmed cause of the hamburger icon
+       rendering far outside the visible viewport on Android. The background
+       is already 96% opaque, so the blur added negligible visual value. */
     position: fixed;
     top: 0; left: 0; right: 0;
     height: var(--header-h);
     background: rgba(255,255,255,0.96);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(0,0,0,0.06);
     z-index: 1000;
 }
