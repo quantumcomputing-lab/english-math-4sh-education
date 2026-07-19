@@ -5,7 +5,7 @@ const hamburger  = document.querySelector('.hamburger');
 const mobileNav  = document.getElementById('mobileNav');
 const navOverlay = document.getElementById('navOverlay');
 const navClose   = document.querySelector('.mobile-nav-close');
-const mobileLinks = document.querySelectorAll('.mobile-link');
+const mobileLinks = mobileNav?.querySelectorAll('a') ?? [];
 
 function openNav() {
     mobileNav.classList.add('open');
