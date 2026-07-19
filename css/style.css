@@ -757,6 +757,7 @@ a   { text-decoration: none; color: inherit; }
     grid-template-columns: 2fr 1fr 1fr;
     gap: 3rem;
 }
+.footer-inner > * { min-width: 0; }
 .footer-logo {
     font-family: var(--font-serif);
     font-size: 1.2rem;
@@ -794,7 +795,7 @@ a   { text-decoration: none; color: inherit; }
     font-weight: 700;
 }
 .footer-nav, .footer-contact { display: flex; flex-direction: column; gap: 0.6rem; }
-.footer-nav a, .footer-contact a { font-size: 0.875rem; color: #aaa; transition: color var(--transition); }
+.footer-nav a, .footer-contact a { font-size: 0.875rem; color: #aaa; transition: color var(--transition); overflow-wrap: break-word; }
 .footer-nav a:hover, .footer-contact a:hover { color: #fff; }
 .footer-bottom {
     border-top: 1px solid rgba(255,255,255,0.08);
