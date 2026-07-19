@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Without this, Android Chrome's auto-dark-theme heuristic can
+         reinterpret/invert colors on undeclared-theme pages -- suspected
+         cause of the hamburger icon (three plain CSS-background spans, no
+         text/border for the heuristic to key off) rendering invisible on
+         Android Chrome while fine on iOS Safari and desktop. -->
+    <meta name="color-scheme" content="light">
     <title>Every Formula Has a Story — IIT-JEE Maths | 4sh.education</title>
     <meta name="description" content="All 35 JEE Main Mathematics topics, from Sets and Relations to Statistics — each one starting with the real problem that forced someone to invent the idea.">
 
