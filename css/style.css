@@ -493,6 +493,15 @@ a   { text-decoration: none; color: inherit; }
 }
 .btn-quiz-cta:hover { background: var(--crimson-dk); }
 
+/* Disabled state — quiz not launched yet. Greyed out, non-interactive. */
+.btn-disabled {
+    background: #9a9a9a !important;
+    color: #f0f0f0;
+    box-shadow: none !important;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .slab .slab-text { min-width: 0; }
 .slab .slab-text h2 {
     font-family: var(--font-serif);
