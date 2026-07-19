@@ -499,9 +499,9 @@ a   { text-decoration: none; color: inherit; }
 
 /* Disabled state — quiz not launched yet. Greyed out, non-interactive. */
 .btn-disabled {
-    background: #9a9a9a !important;
+    background: #9a9a9a;
     color: #f0f0f0;
-    box-shadow: none !important;
+    box-shadow: none;
     cursor: not-allowed;
     pointer-events: none;
 }

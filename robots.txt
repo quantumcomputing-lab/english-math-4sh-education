@@ -1,7 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /todos.html
-Disallow: /quiz-test.html
-Disallow: /quiz.html
 
 Sitemap: https://english.math.4sh.education/sitemap.xml
