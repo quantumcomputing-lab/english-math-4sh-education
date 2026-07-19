@@ -65,16 +65,18 @@ a   { text-decoration: none; color: inherit; }
    HEADER
 ═══════════════════════════════════════════ */
 .site-header {
-    /* backdrop-filter removed: combining it with position:fixed on the same
-       element is a known Chromium bug class (mis-sized/mis-positioned fixed
-       containing block, especially on Android Chrome and in Chromium's
-       mobile-emulation mode) -- confirmed cause of the hamburger icon
-       rendering far outside the visible viewport on Android. The background
-       is already 96% opaque, so the blur added negligible visual value. */
+    /* backdrop-filter was removed here as a fix attempt, then reverted --
+       Bengali_Site_prod has this exact same position:fixed + backdrop-filter
+       pattern and its hamburger works fine on Android, which proved this
+       was never the real cause (see the .topic-banner 100vw fix below for
+       the actual root cause). Kept for parity with the proven-working
+       reference site rather than an unexplained deviation. */
     position: fixed;
     top: 0; left: 0; right: 0;
     height: var(--header-h);
     background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border-bottom: 1px solid rgba(0,0,0,0.06);
     z-index: 1000;
 }
@@ -426,17 +428,40 @@ a   { text-decoration: none; color: inherit; }
 ═══════════════════════════════════════════ */
 .topic-banner {
     position: relative;
-    width: 100vw;
-    /* margin-based full-bleed breakout (not transform) — .fade-in also
-       animates via `transform`, and only one transform value can win when
-       two rules both set it, so a transform-based centering trick here
-       would silently fight the reveal animation on the same element. */
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
     margin-bottom: 3rem;
     height: min(52vh, 460px);
     min-height: 320px;
     overflow: hidden;
+}
+/* Full-bleed breakout, split by viewport instead of one 100vw rule for all
+   sizes. 100vw is a well-documented source of real-device-only bugs on
+   Android Chrome (miscalculates against the dynamic toolbar/scrollbar,
+   unlike desktop DevTools' mobile emulation, which never reproduces it) --
+   confirmed root cause of the site's fixed header rendering at roughly
+   double the real viewport width on an actual Android phone, present on
+   all 35 chapters via this one rule. Below 900px, .topic-slab's padding is
+   a fixed 2rem at every width, so a plain negative margin achieves the
+   identical full-bleed look with no viewport-unit math at all. Above
+   900px, .topic-slab's centering gap varies with viewport width, so the
+   vw-based technique still does the real work there -- but only on
+   desktop, where this bug doesn't occur. */
+@media (max-width: 900px) {
+    .topic-banner {
+        margin-left: -2rem;
+        margin-right: -2rem;
+    }
+}
+@media (min-width: 901px) {
+    .topic-banner {
+        width: 100vw;
+        /* margin-based full-bleed breakout (not transform) — .fade-in also
+           animates via `transform`, and only one transform value can win
+           when two rules both set it, so a transform-based centering trick
+           here would silently fight the reveal animation on the same
+           element. */
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+    }
 }
 .topic-banner img {
     width: 100%;
