@@ -25,7 +25,18 @@
     --transition:  0.3s ease;
 }
 
-html { scroll-behavior: smooth; font-size: 20px; }
+/* scroll-behavior: smooth is intentionally NOT set here. An animated scroll
+   to a distant anchor (e.g. jumping from the top to a chapter 30+ sections
+   down) passes through every intervening topic-slab, and each one crosses
+   the lazy math-render IntersectionObserver's threshold mid-animation --
+   piling up enough synchronous KaTeX rendering in a tight window to hang or
+   crash the tab on a real phone (confirmed: iOS Safari's "A problem
+   repeatedly occurred" page on a #topic-33 jump). Instant (default) jumps
+   don't animate through intermediate scroll positions, so this class of bug
+   can't happen -- see the render-on-click logic at the end of body, which
+   pre-renders just the destination section before the jump so there's no
+   flash of unrendered math either. */
+html { font-size: 20px; }
 
 /* Every anchor-jump target (nav links, dropdown chapter links) needs this —
    otherwise the fixed header lands flush over the top of the section and

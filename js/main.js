@@ -109,5 +109,10 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 backToTop?.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Instant, not smooth -- an animated scroll from deep in the page back to
+    // the top would pass through every intervening (possibly still
+    // unrendered) chapter, risking the same lazy-math-render pile-up that
+    // caused real navigation crashes on chapter jumps. See css/style.css's
+    // note on why scroll-behavior: smooth is not used anywhere on this page.
+    window.scrollTo({ top: 0 });
 });

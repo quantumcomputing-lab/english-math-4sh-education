@@ -1811,15 +1811,36 @@ Gondhorbomadan chotpot uthe bollo, “Sir, amader bari-te ami shoptahe 15-ta tha
         ],
         throwOnError: false
       };
+
+      function renderSlab(el) {
+        if (!el || el.dataset.mathRendered) return;
+        renderMathInElement(el, katexOptions);
+        el.dataset.mathRendered = 'true';
+        mathObserver.unobserve(el);
+      }
+
       const mathObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            renderMathInElement(entry.target, katexOptions);
-            mathObserver.unobserve(entry.target);
-          }
+          if (entry.isIntersecting) renderSlab(entry.target);
         });
       }, { rootMargin: '600px 0px' });
       document.querySelectorAll('.topic-slab').forEach(el => mathObserver.observe(el));
+
+      // Every in-page anchor link (nav, dropdown, footer sitemap) must land
+      // on a destination whose math is already rendered -- otherwise the
+      // section's height can still change right after landing (a visible
+      // flash). Combined with animated scrolling this previously caused a
+      // real "problem repeatedly occurred" crash on iOS Safari jumping to a
+      // distant, never-yet-rendered chapter (fixed above by removing
+      // scroll-behavior: smooth entirely); this pre-render is the remaining
+      // piece that stops the flash on an instant jump.
+      document.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener('click', () => {
+          const id = link.getAttribute('href').slice(1);
+          const target = id && document.getElementById(id);
+          if (target) renderSlab(target);
+        });
+      });
     </script>
 
     <!-- Google Analytics -- loaded last so it doesn't compete for connection
