@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Logarithms Quiz — 4sh.education</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/quiz.css">
+</head>
+<body class="quiz-body">
+
+    <div class="quiz-wrap screen" id="quizWrap">
+        <div class="quiz-panel">
+            <div class="quiz-meta-row">
+                <p class="quiz-eyebrow" id="quizEyebrow"></p>
+                <p class="quiz-question-count"><span id="chapterLabel"></span> &bull; <span id="questionCount"></span></p>
+            </div>
+            <p class="quiz-question" id="quizQuestion"></p>
+            <!-- Placeholder Q&A; text is filled in by js/quiz-engine.js from data/topic-1.js. Will be sourced from a .tex file later. -->
+            <ul class="quiz-options" id="quizOptions">
+                <li><button class="quiz-option" data-option="A"></button></li>
+                <li><button class="quiz-option" data-option="B"></button></li>
+                <li><button class="quiz-option" data-option="C"></button></li>
+                <li><button class="quiz-option" data-option="D"></button></li>
+            </ul>
+        </div>
+
+        <div class="quiz-timer-outer">
+            <div class="quiz-timer-col" id="timerCol">
+                <span class="quiz-timer-label" id="timerLabel">Time Left</span>
+                <div class="quiz-timer-globe" id="timerRing">
+                    <span class="quiz-timer-num" id="timerNum">59.000s</span>
+                </div>
+                <button class="quiz-submit" id="submitBtn" disabled>Submit</button>
+                <a href="index.html#contact" class="quiz-secondary-btn quiz-contact-btn"><span class="quiz-secondary-btn-label">Contact 4sh for improving your reaction speed</span></a>
+                <a href="index.html#topic-1" class="quiz-secondary-btn quiz-home-btn"><span class="quiz-secondary-btn-label">Home</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-wrap screen" id="resultsWrap" hidden>
+        <div class="results-panel">
+            <p class="results-headline" id="resultsHeadline">Correct! See your response time.</p>
+
+            <div class="chart-card">
+                <div class="chart-svg-wrap" id="chartWrap"></div>
+            </div>
+
+            <p class="results-caption" id="resultsCaption">Your rank is 1/100</p>
+
+            <section class="solution-section">
+                <p class="solution-heading">Solution</p>
+                <p class="solution-question" id="solutionQuestion"></p>
+                <!-- Placeholder walkthrough; will be sourced from the .tex file later, same as the question itself. -->
+                <p class="solution-body" id="solutionBody"></p>
+            </section>
+
+            <section class="reflect-section">
+                <p class="reflect-heading">Self-Reflection</p>
+                <p class="reflect-intro">Before moving on, reflect on what went wrong and why it took you time to solve the problem. This is the most important part of the session — more important than getting the answer — so take your time and don't rush.</p>
+
+                <div class="reflect-options" id="reflectOptions">
+                    <label class="reflect-option">
+                        <input type="checkbox" value="random-click">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>1. (Random click)</strong> I just made an educated guess. Please skip this diagnosis.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="language-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>2. (Language issue)</strong> I lost time re-reading the question as the language was not clear to me the first time.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="newness-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>3. (Newness issue)</strong> This is too new for me. I just learned it with insufficient practise.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="retention-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>4. (Retention issue)</strong> I have practised this before but I simply forgot the concepts.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="strategy-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>5. (Strategy issue)</strong> I remember this topic well. I simply could not figure out the approach for this specific question.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="calculation-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>6. (Calculation issue)</strong> Everything is fine – I just got caught up in some stupid calculation mistakes.</span>
+                    </label>
+                </div>
+
+                <button class="quiz-submit reflect-next-btn" id="reflectNextBtn" disabled>Submit self-diagnosis</button>
+            </section>
+
+            <div class="results-footer-actions">
+                <a href="index.html#contact" class="quiz-secondary-btn quiz-contact-btn"><span class="quiz-secondary-btn-label">Contact 4sh for improving your reaction speed</span></a>
+                <a href="index.html#topic-1" class="quiz-secondary-btn quiz-home-btn"><span class="quiz-secondary-btn-label">Home</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-wrap screen" id="diagnosticsWrap" hidden>
+        <div class="results-panel">
+            <p class="results-caption" id="diagnosticsCaption">You got 0 out of 0 correct. Let's talk about your speed diagnostics based on non-random clicks.</p>
+
+            <div class="bar-graph" id="diagnosticsBarGraph"></div>
+
+            <button class="quiz-submit reflect-next-btn" id="nextQuestionBtn">Next Question</button>
+
+            <div class="results-footer-actions">
+                <a href="index.html#contact" class="quiz-secondary-btn quiz-contact-btn"><span class="quiz-secondary-btn-label">Contact 4sh for improving your reaction speed</span></a>
+                <a href="index.html#topic-1" class="quiz-secondary-btn quiz-home-btn"><span class="quiz-secondary-btn-label">Home</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-wrap screen" id="sessionCompleteWrap" hidden>
+        <div class="results-panel">
+            <p class="results-headline" id="sessionCompleteHeadline">Session complete!</p>
+            <p class="results-caption" id="sessionCompleteCaption">You got 0 out of 10 correct.</p>
+
+            <div class="bar-graph" id="sessionCompleteBarGraph"></div>
+
+            <div class="recommend-section" id="recommendSection"></div>
+
+            <div class="results-footer-actions">
+                <a href="index.html#contact" class="quiz-secondary-btn quiz-contact-btn"><span class="quiz-secondary-btn-label">Contact 4sh for improving your reaction speed</span></a>
+                <a href="index.html#topic-1" class="quiz-secondary-btn quiz-home-btn"><span class="quiz-secondary-btn-label">Home</span></a>
+            </div>
+        </div>
+    </div>
+
+    <script src="data/topic-1.js"></script>
+    <script src="js/quiz-engine.js"></script>
+</body>
+</html>

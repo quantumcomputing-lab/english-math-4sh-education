@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Todos — 4sh.education</title>
+<style>
+    body {
+        font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+        max-width: 720px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+        line-height: 1.6;
+        color: #222;
+    }
+    h1 { font-size: 1.4rem; }
+    ol { padding-left: 1.4rem; }
+    li { margin-bottom: 0.6rem; }
+    .status {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        padding: 0.1rem 0.5rem;
+        border-radius: 4px;
+        margin-right: 0.5rem;
+    }
+    .done       { background: #dff5df; color: #1e6b1e; }
+    .todo       { background: #eee;    color: #555; }
+    .blocked    { background: #fde8d8; color: #a35a10; }
+    .confirm    { background: #fdf0d5; color: #8a6d16; }
+    .external   { background: #e6e9fb; color: #3a3fa0; }
+    .decided    { background: #e3e3e3; color: #444; }
+</style>
+</head>
+<body>
+
+<h1>Quiz System — Todos</h1>
+
+<ol>
+    <li><span class="status done">Done</span> Quiz interaction prototype (timer/globe, submit, correct/incorrect feedback, response-time capture, mobile layout) — <code>quiz-test.html</code></li>
+    <li><span class="status decided">Decided</span> Build script (.tex&rarr;HTML) lives external to this repo — only its output (pre-built HTML/JSON/images) gets committed here</li>
+    <li><span class="status done">Done</span> Self-diagnosis system: 6-category self-reflection (Random click excluded from all aggregation; Language/Newness/Retention/Strategy/Calculation issue), per-question diagnostics screen (running X/Y correct + 100%-normalized 5-bar issue graph), end-of-session "Recommended for you" (highest-tally issue(s), ties handled, fixed per-issue advice) — <code>quiz-test.html</code></li>
+    <li><span class="status todo">Todo</span> Question/option data schema for real chapter content — the <em>shape</em> is now defined and proven (<code>data/topic-1.js</code>: question, 4 options, correct answer, solution, chapter metadata); filling it with real content is still blocked on the .tex pipeline</li>
+    <li><span class="status done">Done</span> Generalize <code>quiz-test.html</code> into a reusable engine: <code>quiz.html</code> + <code>js/quiz-engine.js</code> + <code>css/quiz.css</code>, driven by a chapter data file (<code>data/topic-1.js</code>) instead of hardcoded HTML/constants. <code>quiz-test.html</code> is left in place untouched as a standalone prototype</li>
+    <li><span class="status done">Done</span> Chapter navigation: load one chapter's data once (currently a 10-entry placeholder <code>QUESTIONS</code> array), step through its questions client-side, no reload per question</li>
+    <li><span class="status done">Done</span> localStorage persistence within a chapter attempt (<code>js/quiz-engine.js</code>) — saved at question boundaries only, keyed per chapter, silently resumes mid-session on reload, cleared on session completion</li>
+    <li><span class="status done">Done</span> End-of-chapter diagnostics summary UI — "Session complete!" screen: final X/10 tally, final bar graph, recommendation</li>
+    <li><span class="status todo">Todo</span> Solution section: currently reproduces the question (kept in sync live via JS, can't drift) plus a placeholder Lorem-ipsum walkthrough; real step-by-step solution content is blocked on the .tex pipeline, same as the question itself</li>
+    <li><span class="status decided">Decided</span> Shared/repeated quiz copy (self-reflection options, recommendation advice, button labels, screen headlines/captions) centralized in <code>quiz_content.yaml</code> at the workspace root, synced into each quiz HTML file on request — same pattern as <code>whatsapp_slab_content.yaml</code></li>
+    <li><span class="status external">External</span> Build pipeline: .tex &rarr; pre-built HTML (math, diagrams, tables, tikz) — lives outside this repo per Samudra's call; only output gets committed here</li>
+    <li><span class="status decided">Decided</span> No live/client-side KaTeX needed — math is pre-rendered at build time, browser just displays static HTML</li>
+    <li><span class="status decided">Decided</span> Background music — skipped</li>
+    <li><span class="status todo">Todo</span> Once engine + one sample chapter are proven end-to-end, roll out to all 36 chapters — engine + one sample chapter (placeholder content) are now both proven end-to-end (<code>quiz.html</code> + <code>data/topic-1.js</code>); only remaining blocker is real per-chapter content from the .tex pipeline, one <code>data/topic-N.js</code> file per chapter</li>
+</ol>
+
+</body>
+</html>

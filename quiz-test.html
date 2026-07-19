@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Quiz Test — 4sh.education</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<style>
+    /* Two sizes for all page copy: a base for UI chrome/body text, a display
+       size for the one heading. The timer globe's countdown digits, the
+       mobile bottom-bar's compact label, and the results chart's axis/tick
+       labels are the only exceptions — all three are fitted to a fixed-size
+       widget (a circle, a slim bar, an SVG viewBox that scales as one unit)
+       and clip/wrap if forced onto this scale, verified by hand. */
+    :root {
+        --fs-base: 1rem;
+        --fs-display: clamp(1.4rem, 3vw, 1.9rem);
+        /* Results/self-reflection screen only — a deliberately different register
+           from the quiz's game-night aesthetic: this is the "read your numbers,
+           reflect honestly" screen, styled to match the main site's own
+           professional palette (css/style.css) rather than the timer globe's neon. */
+        --prof-bg:       #F2F0EA;
+        --prof-card:     #FFFFFF;
+        --prof-border:   #E2DFD6;
+        --prof-text:     #2D2D2D;
+        --prof-muted:    #6B6B6B;
+        --prof-crimson:  #A51C30;
+        --prof-dark-red: #8B1E1E;
+        --prof-navy:     #17335E;
+        --prof-green:    #1E7A46;
+    }
+    body.quiz-body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FAFAFA url('img/play-background.webp') center center / cover no-repeat;
+        padding: 2rem 1.5rem;
+    }
+    /* Swapped in by goToResultsScreen() — the photo backdrop is right for the
+       quiz itself, but wrong for a page asking the student to seriously reflect. */
+    body.quiz-body.results-active {
+        background: var(--prof-bg);
+    }
+
+    .quiz-wrap {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        gap: 3rem;
+        align-items: flex-start;
+        justify-content: center;
+        flex-wrap: wrap-reverse;
+    }
+
+    /* ── Question panel ── */
+    /* No card, no tint — genuinely nothing behind the text, so the background
+       photo shows completely. Legibility instead comes entirely from a dark
+       text-shadow halo (same trick as the "TIME LEFT" label) on every piece
+       of text here, since there's no backdrop to guarantee contrast anymore. */
+    .quiz-panel {
+        flex: 1 1 420px;
+        max-width: 520px;
+        padding: 1.75rem 2rem 2rem;
+    }
+    .quiz-meta-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.15rem;
+        margin-bottom: 0.75rem;
+    }
+    .quiz-eyebrow {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #ff4d6a;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85), 0 0 14px rgba(0, 0, 0, 0.6);
+    }
+    .quiz-question-count {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.75);
+        letter-spacing: 0.02em;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85), 0 0 14px rgba(0, 0, 0, 0.6);
+    }
+    .quiz-question {
+        font-family: var(--font-serif);
+        font-size: var(--fs-display);
+        font-weight: 700;
+        color: #F5F3EF;
+        line-height: 1.35;
+        margin-bottom: 2rem;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 22px rgba(0, 0, 0, 0.7);
+    }
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        list-style: none;
+    }
+    .quiz-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 700;
+        color: #fff;
+        background: rgba(20, 22, 20, 0.62);
+        border: 2px solid rgba(255, 255, 255, 0.28);
+        border-radius: 8px;
+        padding: 0.95rem 1.25rem;
+        cursor: pointer;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        transition: border-color var(--transition), background var(--transition), transform 0.15s ease;
+    }
+    .quiz-option:hover:not(:disabled) {
+        border-color: var(--crimson);
+        background: rgba(28, 24, 24, 0.72);
+        transform: translateX(2px);
+    }
+    .quiz-option:disabled { cursor: not-allowed; opacity: 0.55; }
+    .quiz-option.selected {
+        border-color: var(--crimson);
+        background: rgba(120, 20, 36, 0.68);
+        color: #ffc7cf;
+    }
+    .quiz-option.correct {
+        border-color: #4CAF50;
+        background: rgba(30, 90, 36, 0.68);
+        color: #c3f2c5;
+    }
+    .quiz-option.incorrect {
+        border-color: #E05C5C;
+        background: rgba(110, 24, 24, 0.68);
+        color: #ffc2c2;
+    }
+
+    /* ── Timer, right side ──
+       Sticky so it stays reachable while a long question/option list scrolls;
+       the mobile media query below replaces this with a fixed bottom bar instead.
+       .quiz-timer-outer stretches to the full row height so the inner sticky
+       element has room to travel — position:sticky gets no room to move inside
+       a flex container using align-items:flex-start (Chromium quirk, confirmed
+       empirically), so the stretch has to happen one level up. */
+    .quiz-timer-outer {
+        flex: 0 0 auto;
+        align-self: stretch;
+    }
+    .quiz-timer-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.6rem;
+        position: sticky;
+        top: 1.5rem;
+    }
+    .quiz-timer-label {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #fff;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85), 0 0 14px rgba(0, 0, 0, 0.6);
+    }
+
+    /* ── Timer globe: mysterious, ominous, glowing sphere ── */
+    .quiz-timer-globe {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+            radial-gradient(circle at 32% 28%, rgba(150, 100, 230, 0.4), transparent 42%),
+            radial-gradient(circle at 68% 72%, rgba(18, 8, 36, 0.95), #000 72%);
+        box-shadow:
+            0 0 22px 4px rgba(130, 70, 210, 0.55),
+            0 0 60px 16px rgba(90, 40, 170, 0.35),
+            inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        overflow: hidden;
+        animation: globePulse 4s ease-in-out infinite;
+    }
+    .quiz-timer-globe::before {
+        content: '';
+        position: absolute;
+        inset: -25%;
+        background: conic-gradient(from 0deg,
+            transparent 0deg,
+            rgba(160, 100, 240, 0.55) 55deg,
+            transparent 140deg,
+            rgba(100, 55, 190, 0.4) 220deg,
+            transparent 300deg,
+            transparent 360deg);
+        animation: globeSpin 7s linear infinite;
+        mix-blend-mode: screen;
+    }
+    .quiz-timer-globe::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        box-shadow: inset 0 0 26px 8px rgba(0, 0, 0, 0.85);
+    }
+    /* First half of the countdown: calm green.
+       Reused after Submit for a correct answer — same green, different meaning. */
+    .quiz-timer-globe.running,
+    .quiz-timer-globe.correct {
+        background:
+            radial-gradient(circle at 32% 28%, rgba(110, 230, 150, 0.45), transparent 42%),
+            radial-gradient(circle at 68% 72%, rgba(6, 40, 20, 0.95), #000 72%);
+        animation: globePulseGreen 2.6s ease-in-out infinite;
+    }
+    .quiz-timer-globe.running::before,
+    .quiz-timer-globe.correct::before {
+        background: conic-gradient(from 0deg,
+            transparent 0deg,
+            rgba(90, 230, 140, 0.6) 55deg,
+            transparent 140deg,
+            rgba(40, 180, 90, 0.45) 220deg,
+            transparent 300deg,
+            transparent 360deg);
+        animation: globeSpin 6s linear infinite;
+    }
+    .quiz-timer-globe.running .quiz-timer-num,
+    .quiz-timer-globe.correct .quiz-timer-num {
+        text-shadow: 0 0 10px rgba(130, 240, 165, 0.9), 0 0 22px rgba(70, 200, 110, 0.55);
+    }
+    /* Second half: amber warning. */
+    .quiz-timer-globe.warning {
+        background:
+            radial-gradient(circle at 32% 28%, rgba(255, 216, 110, 0.5), transparent 42%),
+            radial-gradient(circle at 68% 72%, rgba(50, 36, 4, 0.95), #000 72%);
+        animation: globePulseYellow 2s ease-in-out infinite;
+    }
+    .quiz-timer-globe.warning::before {
+        background: conic-gradient(from 0deg,
+            transparent 0deg,
+            rgba(255, 208, 80, 0.65) 55deg,
+            transparent 140deg,
+            rgba(220, 158, 20, 0.5) 220deg,
+            transparent 300deg,
+            transparent 360deg);
+        animation: globeSpin 4.5s linear infinite;
+    }
+    .quiz-timer-globe.warning .quiz-timer-num {
+        text-shadow: 0 0 10px rgba(255, 224, 120, 0.9), 0 0 22px rgba(230, 178, 40, 0.55);
+    }
+    /* Overtime: red alarm, counting negative.
+       Reused after Submit for a wrong answer — same red, different meaning. */
+    .quiz-timer-globe.overtime,
+    .quiz-timer-globe.incorrect {
+        background:
+            radial-gradient(circle at 32% 28%, rgba(255, 90, 90, 0.5), transparent 42%),
+            radial-gradient(circle at 68% 72%, rgba(60, 6, 6, 0.95), #000 72%);
+        animation: globePulseRed 1.6s ease-in-out infinite;
+    }
+    .quiz-timer-globe.overtime::before,
+    .quiz-timer-globe.incorrect::before {
+        background: conic-gradient(from 0deg,
+            transparent 0deg,
+            rgba(255, 70, 70, 0.65) 55deg,
+            transparent 140deg,
+            rgba(210, 20, 20, 0.5) 220deg,
+            transparent 300deg,
+            transparent 360deg);
+        animation: globeSpin 2.8s linear infinite;
+    }
+    .quiz-timer-num {
+        position: relative;
+        z-index: 1;
+        font-family: var(--font-serif);
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1;
+        letter-spacing: -0.01em;
+        font-variant-numeric: tabular-nums;
+        text-shadow: 0 0 10px rgba(170, 110, 255, 0.85), 0 0 22px rgba(140, 80, 230, 0.5);
+    }
+    .quiz-timer-globe.overtime .quiz-timer-num,
+    .quiz-timer-globe.incorrect .quiz-timer-num {
+        text-shadow: 0 0 10px rgba(255, 90, 90, 0.9), 0 0 24px rgba(255, 40, 40, 0.6);
+    }
+    .quiz-submit {
+        width: 180px;
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #6CFFA0;
+        background: #0A0F0B;
+        border: 2px solid #2ECC71;
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        text-shadow: 0 0 10px rgba(74, 232, 127, 0.7);
+        box-shadow: 0 0 20px rgba(46, 204, 113, 0.35), 0 4px 14px rgba(0, 0, 0, 0.5);
+        transition: background var(--transition), border-color var(--transition), transform 0.15s ease, box-shadow var(--transition);
+    }
+    .quiz-submit:hover:not(:disabled) {
+        background: #101B12;
+        border-color: #4AE87F;
+        transform: translateY(-1px);
+        box-shadow: 0 0 30px rgba(46, 204, 113, 0.55), 0 6px 20px rgba(0, 0, 0, 0.6);
+    }
+    .quiz-submit:disabled {
+        background: #161616;
+        color: #555;
+        border-color: #333;
+        text-shadow: none;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    /* ── Secondary actions, stacked below Submit ──
+       Same glass-and-glow language as the Submit button and the timer globe,
+       each carrying its own neon accent (--accent, an r,g,b triplet) so the
+       two buttons read as distinct actions rather than a duplicated style.
+       A diagonal shine sweeps across on hover — the "power-up" cue common to
+       game UI buttons — clipped by overflow:hidden and kept under the label
+       via the label span's own stacking context. */
+    .quiz-secondary-btn {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        width: 180px;
+        box-sizing: border-box;
+        font-family: var(--font-sans);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        line-height: 1.3;
+        text-align: center;
+        text-decoration: none;
+        color: #fff;
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.4)), rgba(12, 12, 18, 0.75);
+        border: 2px solid rgba(var(--accent), 0.55);
+        border-radius: 10px;
+        padding: 0.65rem 0.9rem;
+        text-shadow: 0 0 8px rgba(var(--accent), 0.55);
+        box-shadow:
+            0 0 16px rgba(var(--accent), 0.25),
+            inset 0 0 14px rgba(var(--accent), 0.1),
+            0 4px 14px rgba(0, 0, 0, 0.5);
+        transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), transform 0.15s ease;
+    }
+    .quiz-secondary-btn:hover {
+        border-color: rgba(var(--accent), 0.95);
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.35)), rgba(18, 18, 26, 0.8);
+        box-shadow:
+            0 0 28px rgba(var(--accent), 0.5),
+            inset 0 0 18px rgba(var(--accent), 0.18),
+            0 6px 20px rgba(0, 0, 0, 0.6);
+        transform: translateY(-2px);
+    }
+    .quiz-secondary-btn:active { transform: translateY(0); }
+    .quiz-secondary-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.35) 48%, transparent 66%);
+        transform: translateX(-130%);
+        transition: transform 0.55s ease;
+    }
+    .quiz-secondary-btn:hover::before { transform: translateX(130%); }
+    .quiz-secondary-btn-label { position: relative; z-index: 1; }
+    /* Electric cyan — a distinct "get in touch" accent, cooler than the crimson brand mark. */
+    .quiz-contact-btn { --accent: 64, 224, 255; }
+    /* Violet — echoes the timer globe's idle glow, tying "Home" back to the page's own start state. */
+    .quiz-home-btn {
+        --accent: 186, 130, 255;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    /* letter-spacing adds trailing space after the last character too, so
+       text-align:center visually skews left; pull it back by the same amount. */
+    .quiz-home-btn .quiz-secondary-btn-label {
+        display: inline-block;
+        margin-right: -0.08em;
+    }
+
+    @keyframes globeSpin {
+        to { transform: rotate(360deg); }
+    }
+    @keyframes globePulse {
+        0%, 100% {
+            box-shadow:
+                0 0 22px 4px rgba(130, 70, 210, 0.55),
+                0 0 60px 16px rgba(90, 40, 170, 0.35),
+                inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        }
+        50% {
+            box-shadow:
+                0 0 32px 9px rgba(150, 90, 230, 0.75),
+                0 0 85px 26px rgba(100, 50, 190, 0.5),
+                inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        }
+    }
+    @keyframes globePulseGreen {
+        0%, 100% {
+            box-shadow:
+                0 0 22px 4px rgba(60, 200, 110, 0.55),
+                0 0 60px 16px rgba(30, 150, 70, 0.35),
+                inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        }
+        50% {
+            box-shadow:
+                0 0 32px 9px rgba(90, 230, 140, 0.75),
+                0 0 85px 26px rgba(40, 180, 90, 0.5),
+                inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        }
+    }
+    @keyframes globePulseYellow {
+        0%, 100% {
+            box-shadow:
+                0 0 24px 5px rgba(230, 180, 40, 0.6),
+                0 0 65px 18px rgba(200, 140, 10, 0.4),
+                inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        }
+        50% {
+            box-shadow:
+                0 0 36px 11px rgba(255, 210, 80, 0.8),
+                0 0 90px 30px rgba(220, 160, 20, 0.55),
+                inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        }
+    }
+    @keyframes globePulseRed {
+        0%, 100% {
+            box-shadow:
+                0 0 26px 6px rgba(255, 70, 70, 0.6),
+                0 0 70px 20px rgba(210, 20, 20, 0.4),
+                inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        }
+        50% {
+            box-shadow:
+                0 0 42px 13px rgba(255, 90, 90, 0.85),
+                0 0 105px 36px rgba(210, 20, 20, 0.6),
+                inset 0 0 28px 8px rgba(0, 0, 0, 0.9);
+        }
+    }
+
+    /* ── Screens ──
+       Every top-level "page" of this session (quiz, results, diagnostics,
+       session-complete) is a sibling child of body.quiz-body carrying this
+       shared .screen class, and only one is ever un-hidden at a time — body's
+       flex centering does the rest. The [hidden] override is load-bearing:
+       .quiz-wrap sets display:flex unconditionally below, and an author rule
+       always beats the UA stylesheet's [hidden]{display:none} regardless of
+       specificity — without this, a "hidden" panel keeps its layout box, and
+       justify-content:center centers the *pair* of flex children instead of
+       the one that's visible. switchScreen() in the script below drives the
+       is-hiding/is-visible classes for all four screens through one function. */
+    .screen { transition: opacity 0.4s ease; }
+    .screen.is-hiding { opacity: 0; pointer-events: none; }
+    .screen[hidden] { display: none; }
+    /* Diagnostics and session-complete reuse this same card treatment — see
+       #diagnosticsWrap / #sessionCompleteWrap in the HTML below, both of
+       which carry .results-wrap alongside their own id. */
+    /* 640px read as a mobile-width column stranded in the middle of a desktop
+       viewport — same category as the site's narrow .contact-inner form, not
+       a content screen. 760px matches the main site's own text-column width
+       (see css/style.css) — wide enough to stop looking like a mobile page,
+       still a single centered column (a two-column split was tried and
+       reverted — kept simple on request). */
+    .results-wrap {
+        width: 100%;
+        max-width: 760px;
+        opacity: 0;
+    }
+    .results-wrap.is-visible { opacity: 1; }
+    .results-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 0.5rem 0.5rem 2rem;
+    }
+    .results-headline {
+        font-family: var(--font-serif);
+        font-size: var(--fs-display);
+        font-weight: 700;
+        text-align: center;
+        color: var(--prof-text);
+    }
+    .results-headline.correct { color: var(--prof-green); }
+    .results-headline.incorrect { color: var(--prof-dark-red); }
+
+    /* ── Response-time chart ──
+       SVG viewBox scales as a single unit with the card, so the in-SVG text
+       sizes (set in px, see buildChartSVG in the script below) stay legible
+       and proportioned without needing their own breakpoint handling. */
+    .chart-card {
+        background: var(--prof-card);
+        border: 1px solid var(--prof-border);
+        border-radius: 10px;
+        padding: 1.1rem 0.75rem 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .chart-svg-wrap svg { display: block; width: 100%; height: auto; }
+    .chart-svg-wrap .curve-area { fill: url(#curveFillGradient); }
+    .chart-svg-wrap .curve-line { fill: none; stroke: var(--prof-crimson); stroke-width: 2; stroke-linejoin: round; }
+    .chart-svg-wrap .axis-line { stroke: #C7C4BA; stroke-width: 1.5; }
+    .chart-svg-wrap .axis-tick { stroke: #C7C4BA; }
+    .chart-svg-wrap .tick-label { font-size: 10px; fill: var(--prof-muted); font-family: var(--font-sans); }
+    .chart-svg-wrap .axis-caption { font-size: 11px; fill: var(--prof-text); font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.04em; }
+    .chart-svg-wrap .pct-line { stroke: #B9B6AC; stroke-width: 1.2; stroke-dasharray: 4 4; }
+    .chart-svg-wrap .pct-label { font-size: 9.5px; fill: var(--prof-text); font-family: var(--font-sans); font-weight: 700; }
+    .chart-svg-wrap .you-leader { stroke: var(--prof-text); stroke-width: 1; }
+    .chart-svg-wrap .you-dot { fill: var(--prof-card); stroke: var(--prof-text); stroke-width: 3; }
+    .chart-svg-wrap .you-label { font-size: 11px; font-weight: 800; fill: var(--prof-text); font-family: var(--font-sans); }
+
+    .results-caption {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 700;
+        text-align: center;
+        color: var(--prof-text);
+    }
+    .results-caption strong { color: var(--prof-crimson); font-size: 1.2em; }
+    .results-caption.warn { color: var(--prof-dark-red); }
+
+    /* ── Solution ──
+       Reproduces the question (kept in sync with the quiz screen via JS —
+       see renderResults — rather than duplicated by hand, so it can't drift)
+       above the placeholder walkthrough text. Centered throughout, per spec. */
+    .solution-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    .solution-heading {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--prof-crimson);
+    }
+    .solution-question {
+        font-family: var(--font-serif);
+        font-size: var(--fs-display);
+        font-weight: 700;
+        color: var(--prof-text);
+        line-height: 1.35;
+    }
+    .solution-body {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        color: var(--prof-text);
+        line-height: 1.6;
+    }
+
+    /* ── Self-reflection ──
+       White cards on the page's own light-neutral canvas (var(--prof-bg)) —
+       the standard "form on a report page" pattern, separation comes from a
+       hairline border + soft shadow rather than a background-color jump. */
+    .reflect-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .reflect-heading {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-align: center;
+        color: var(--prof-crimson);
+    }
+    .reflect-intro {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 700;
+        color: var(--prof-text);
+        line-height: 1.55;
+    }
+    .reflect-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+    .reflect-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        background: var(--prof-card);
+        border: 1.5px solid var(--prof-navy);
+        border-radius: 8px;
+        padding: 0.8rem 1.1rem;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    }
+    .reflect-option:hover { border-color: var(--prof-navy); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+    /* Visually hidden but still focusable/operable — the .reflect-box below is the
+       visible custom control; this keeps keyboard and screen-reader behavior native. */
+    .reflect-option input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+    }
+    .reflect-box {
+        flex: 0 0 auto;
+        width: 20px;
+        height: 20px;
+        margin-top: 0.15rem;
+        border-radius: 5px;
+        border: 2px solid #C7C4BA;
+        position: relative;
+        transition: border-color var(--transition), background var(--transition);
+    }
+    .reflect-box::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 1px;
+        width: 6px;
+        height: 11px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+    .reflect-option.is-checked {
+        border-color: var(--prof-crimson);
+        background: rgba(165, 28, 48, 0.05);
+    }
+    .reflect-option.is-checked .reflect-box {
+        background: var(--prof-crimson);
+        border-color: var(--prof-crimson);
+    }
+    .reflect-option.is-checked .reflect-box::after { opacity: 1; }
+    .reflect-text {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        color: var(--prof-text);
+        line-height: 1.5;
+    }
+    .reflect-text strong { color: var(--prof-crimson); }
+
+    /* Overrides the neon .quiz-submit look (shared class, reused here) with the
+       site's own solid CTA style — see .btn-chapter-cta in css/style.css. */
+    .reflect-next-btn {
+        width: 100%;
+        max-width: 360px;
+        margin: 0.5rem auto 0;
+        display: block;
+        background: var(--prof-dark-red);
+        color: #fff;
+        border: 2px solid var(--prof-navy);
+        text-shadow: none;
+        box-shadow: none;
+    }
+    .reflect-next-btn:hover:not(:disabled) {
+        background: #6B1515;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(139, 30, 30, 0.3);
+    }
+    .reflect-next-btn:disabled {
+        background: #E2DFD6;
+        color: #6E695D;
+        border: 2px solid #A9B2C3;
+        text-shadow: none;
+    }
+
+    /* Overrides the neon .quiz-secondary-btn look for the two exit actions on
+       this screen — plain outline buttons, same family as .btn-chapter-cta. */
+    .results-footer-actions .quiz-secondary-btn {
+        background: var(--prof-card);
+        border: 1.5px solid var(--prof-navy);
+        color: var(--prof-text);
+        text-shadow: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .results-footer-actions .quiz-secondary-btn::before { display: none; }
+    .results-footer-actions .quiz-secondary-btn:hover {
+        border-color: var(--prof-crimson);
+        background: var(--prof-card);
+        color: var(--prof-crimson);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+    }
+    .results-footer-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding-top: 0.5rem;
+    }
+
+    /* ── Diagnostics bar graph ──
+       Five separate horizontal bars (not one 100%-stacked bar) — one row per
+       issue, each bar's length is that issue's share of total non-random-click
+       diagnoses logged so far this session. Card treatment matches .chart-card. */
+    .bar-graph {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        background: var(--prof-card);
+        border: 1px solid var(--prof-border);
+        border-radius: 10px;
+        padding: 1.1rem 1.25rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .bar-label {
+        flex: 0 0 150px;
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        color: var(--prof-text);
+    }
+    .bar-track {
+        flex: 1 1 auto;
+        height: 22px;
+        background: #EDEAE1;
+        border: 1.5px solid var(--prof-navy);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .bar-fill {
+        display: block;
+        height: 100%;
+        background: var(--prof-crimson);
+        transition: width 0.5s ease;
+    }
+    .bar-pct {
+        flex: 0 0 44px;
+        text-align: right;
+        font-family: var(--font-sans);
+        font-weight: 700;
+        color: var(--prof-text);
+    }
+
+    /* ── Session-complete recommendation ──
+       Only ever populated on #sessionCompleteWrap (see renderRecommendation in the
+       script). Left empty — no heading, no paragraphs — when no non-random-click
+       diagnosis was logged all session, so there's nothing to recommend from. */
+    .recommend-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .recommend-heading {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-align: center;
+        color: var(--prof-crimson);
+    }
+    .recommend-intro {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        font-weight: 700;
+        color: var(--prof-text);
+        line-height: 1.55;
+    }
+    .recommend-bullet {
+        font-family: var(--font-sans);
+        font-size: var(--fs-base);
+        color: var(--prof-text);
+        line-height: 1.55;
+    }
+
+    /* ── Mobile: timer + Submit pinned to the bottom of the screen ──
+       Selecting an option shouldn't require scrolling back up to submit,
+       so below this breakpoint the timer col becomes a fixed bar. */
+    @media (max-width: 760px) {
+        body.quiz-body {
+            align-items: flex-start;
+            padding: 1.75rem 1.25rem;
+        }
+        .quiz-wrap {
+            flex-direction: column;
+            flex-wrap: nowrap;
+        }
+        .quiz-panel {
+            max-width: none;
+            padding-bottom: 260px; /* clears the fixed bar (now 4 rows tall, ~246px measured) so the last option is reachable */
+        }
+        .quiz-timer-outer {
+            align-self: auto;
+        }
+        .quiz-timer-col {
+            position: fixed;
+            top: auto; /* resets the desktop sticky offset so this doesn't stretch top-to-bottom */
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 40;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            grid-template-rows: auto auto auto auto;
+            column-gap: 0.85rem;
+            row-gap: 0.15rem;
+            width: auto;
+            margin: 0 !important; /* overrides the desktop alignment offset from alignGlobeTop() */
+            padding: 0.75rem 1.25rem calc(0.75rem + env(safe-area-inset-bottom));
+            background: rgba(14, 9, 22, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.4);
+        }
+        .quiz-timer-label {
+            grid-column: 1;
+            grid-row: 1;
+            font-size: 0.6rem;
+            text-align: center;
+        }
+        .quiz-timer-globe {
+            grid-column: 1;
+            grid-row: 2;
+            width: 84px;
+            height: 84px;
+        }
+        .quiz-timer-globe .quiz-timer-num {
+            font-size: 0.95rem;
+            letter-spacing: -0.03em;
+        }
+        .quiz-submit {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            width: auto;
+            height: 100%;
+        }
+        .quiz-secondary-btn {
+            grid-column: 1 / -1;
+            width: auto;
+            font-size: 0.7rem;
+            padding: 0.5rem 0.75rem;
+        }
+        .quiz-contact-btn { grid-row: 3; }
+        .quiz-home-btn { grid-row: 4; }
+
+        .results-panel { padding: 0.25rem 0.25rem 1.5rem; gap: 1.25rem; }
+        .chart-card { padding: 0.9rem 0.5rem 0.4rem; }
+        .results-footer-actions { flex-direction: column; align-items: stretch; }
+
+        /* Label above the bar instead of squeezed to its left — a fixed 150px
+           label column left too little room for the track on a 390px phone. */
+        .bar-row { flex-wrap: wrap; row-gap: 0.3rem; }
+        .bar-label { flex: 1 1 100%; }
+        .bar-pct { flex: 0 0 auto; margin-left: auto; }
+    }
+
+    /* ── Desktop: results screen goes two-column ──
+       Below this width the columns feel cramped rather than spacious — the
+       760–900px gap deliberately stays single-column too (stacked is the
+       default state above; this only widens it further and adds columns
+       once there's genuinely room for both). Diagnostics/session-complete
+       don't get a matching query — they're single-column by design (a bar
+       graph plus a couple of sentences has nothing meaningful to sit beside). */
+</style>
+</head>
+<body class="quiz-body">
+
+    <div class="quiz-wrap screen" id="quizWrap">
+        <div class="quiz-panel">
+            <div class="quiz-meta-row">
+                <p class="quiz-eyebrow">Mathematics &bull; Logarithms</p>
+                <p class="quiz-question-count">(L0) Foundations &bull; <span id="questionCount"></span></p>
+            </div>
+            <p class="quiz-question">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua? Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat?</p>
+            <!-- Placeholder Q&A; will be sourced from a .tex file later. -->
+            <ul class="quiz-options" id="quizOptions">
+                <li><button class="quiz-option" data-option="A">A. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</button></li>
+                <li><button class="quiz-option" data-option="B">B. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus.</button></li>
+                <li><button class="quiz-option" data-option="C">C. Nulla quis lorem ut libero malesuada feugiat. Vivamus suscipit tortor eget felis porttitor volutpat. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi.</button></li>
+                <li><button class="quiz-option" data-option="D">D. Pellentesque in ipsum id orci porta dapibus. Vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.</button></li>
+            </ul>
+        </div>
+
+        <div class="quiz-timer-outer">
+            <div class="quiz-timer-col" id="timerCol">
+                <span class="quiz-timer-label" id="timerLabel">Time Left</span>
+                <div class="quiz-timer-globe" id="timerRing">
+                    <span class="quiz-timer-num" id="timerNum">59.000s</span>
+                </div>
+                <button class="quiz-submit" id="submitBtn" disabled>Submit</button>
+                <a href="index.html#contact" class="quiz-secondary-btn quiz-contact-btn"><span class="quiz-secondary-btn-label">Contact 4sh for improving your reaction speed</span></a>
+                <a href="index.html#topic-1" class="quiz-secondary-btn quiz-home-btn"><span class="quiz-secondary-btn-label">Home</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-wrap screen" id="resultsWrap" hidden>
+        <div class="results-panel">
+            <p class="results-headline" id="resultsHeadline">Correct! See your response time.</p>
+
+            <div class="chart-card">
+                <div class="chart-svg-wrap" id="chartWrap"></div>
+            </div>
+
+            <p class="results-caption" id="resultsCaption">Your rank is 1/100</p>
+
+            <section class="solution-section">
+                <p class="solution-heading">Solution</p>
+                <p class="solution-question" id="solutionQuestion"></p>
+                <!-- Placeholder walkthrough; will be sourced from the .tex file later, same as the question itself. -->
+                <p class="solution-body">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus, et ultricies elit convallis quis. Nulla quis lorem ut libero malesuada feugiat, vivamus suscipit tortor eget felis porttitor volutpat. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Pellentesque in ipsum id orci porta dapibus, vestibulum ac diam sit amet quam vehicula elementum sed sit amet dui. Curabitur non nulla sit amet nisl tempus convallis quis ac lectus, quisque velit nisi, pretium ut lacinia in, elementum id enim. Donec rutrum congue leo eget malesuada, cras ultricies ligula sed magna dictum porta, proin eget tortor risus.</p>
+            </section>
+
+            <section class="reflect-section">
+                <p class="reflect-heading">Self-Reflection</p>
+                <p class="reflect-intro">Before moving on, reflect on what went wrong and why it took you time to solve the problem. This is the most important part of the session — more important than getting the answer — so take your time and don't rush.</p>
+
+                <div class="reflect-options" id="reflectOptions">
+                    <label class="reflect-option">
+                        <input type="checkbox" value="random-click">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>1. (Random click)</strong> I just made an educated guess. Please skip this diagnosis.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="language-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>2. (Language issue)</strong> I lost time re-reading the question as the language was not clear to me the first time.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="newness-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>3. (Newness issue)</strong> This is too new for me. I just learned it with insufficient practise.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="retention-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>4. (Retention issue)</strong> I have practised this before but I simply forgot the concepts.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="strategy-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>5. (Strategy issue)</strong> I remember this topic well. I simply could not figure out the approach for this specific question.</span>
+                    </label>
+                    <label class="reflect-option">
+                        <input type="checkbox" value="calculation-issue">
+                        <span class="reflect-box" aria-hidden="true"></span>
+                        <span class="reflect-text"><strong>6. (Calculation issue)</strong> Everything is fine – I just got caught up in some stupid calculation mistakes.</span>
+                    </label>
+                </div>
+
+                <button class="quiz-submit reflect-next-btn" id="reflectNextBtn" disabled>Submit self-diagnosis</button>
+            </section>
+
+            <div class="results-footer-actions">
+                <a href="index.html#contact" class="quiz-secondary-btn quiz-contact-btn"><span class="quiz-secondary-btn-label">Contact 4sh for improving your reaction speed</span></a>
+                <a href="index.html#topic-1" class="quiz-secondary-btn quiz-home-btn"><span class="quiz-secondary-btn-label">Home</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-wrap screen" id="diagnosticsWrap" hidden>
+        <div class="results-panel">
+            <p class="results-caption" id="diagnosticsCaption">You got 0 out of 0 correct. Let's talk about your speed diagnostics based on non-random clicks.</p>
+
+            <div class="bar-graph" id="diagnosticsBarGraph"></div>
+
+            <button class="quiz-submit reflect-next-btn" id="nextQuestionBtn">Next Question</button>
+
+            <div class="results-footer-actions">
+                <a href="index.html#contact" class="quiz-secondary-btn quiz-contact-btn"><span class="quiz-secondary-btn-label">Contact 4sh for improving your reaction speed</span></a>
+                <a href="index.html#topic-1" class="quiz-secondary-btn quiz-home-btn"><span class="quiz-secondary-btn-label">Home</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-wrap screen" id="sessionCompleteWrap" hidden>
+        <div class="results-panel">
+            <p class="results-headline" id="sessionCompleteHeadline">Session complete!</p>
+            <p class="results-caption" id="sessionCompleteCaption">You got 0 out of 10 correct.</p>
+
+            <div class="bar-graph" id="sessionCompleteBarGraph"></div>
+
+            <div class="recommend-section" id="recommendSection"></div>
+
+            <div class="results-footer-actions">
+                <a href="index.html#contact" class="quiz-secondary-btn quiz-contact-btn"><span class="quiz-secondary-btn-label">Contact 4sh for improving your reaction speed</span></a>
+                <a href="index.html#topic-1" class="quiz-secondary-btn quiz-home-btn"><span class="quiz-secondary-btn-label">Home</span></a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const COUNT_FROM      = 59;   // countdown length, seconds — covers reading + answering, clock starts immediately
+        const QUESTION_TOTAL  = 10;   // placeholder; series length isn't finalized yet
+        const RESULTS_DELAY_MS = 1000; // pause on the graded answer before the results screen appears
+        const RT_MEDIAN_SEC = 20;              // seconds — placeholder cohort median response time; will come from real telemetry later
+        const RT_SIGMA      = 0.5;             // log-space spread; controls how long the right tail is
+        const RT_MU         = Math.log(RT_MEDIAN_SEC); // log-normal's own "mean" parameter, derived so its median lands exactly on RT_MEDIAN_SEC
+
+        // Placeholder series — same Lorem-ipsum question/option text for all 10 (real
+        // per-question content is still blocked on the .tex build pipeline, see
+        // todos.html), just a varied correct answer so working through the set
+        // exercises both the correct and incorrect paths.
+        const QUESTIONS = [
+            { correct: 'D' }, { correct: 'B' }, { correct: 'A' }, { correct: 'C' }, { correct: 'D' },
+            { correct: 'A' }, { correct: 'B' }, { correct: 'C' }, { correct: 'D' }, { correct: 'B' },
+        ];
+
+        const timerCol     = document.getElementById('timerCol');
+        const timerLabel   = document.getElementById('timerLabel');
+        const globe        = document.getElementById('timerRing');
+        const timerNum     = document.getElementById('timerNum');
+        const options      = document.querySelectorAll('.quiz-option');
+        const submitBtn    = document.getElementById('submitBtn');
+        const questionCount = document.getElementById('questionCount');
+
+        let CORRECT_OPTION = null; // set per-question by startQuestion()
+
+        let selectedOption = null;
+        let submitted = false;
+        let lastAnswerCorrect = false;
+        let countdownStart = null; // performance.now() timestamp the response clock started
+        let rafId = null;
+        let responseTimeMs = null; // the one number this whole page exists to measure
+
+        // Session-wide state, accumulated across all 10 questions.
+        let currentQuestionIndex = 1;
+        let attemptedCount = 0; // Y — questions attempted so far
+        let correctCount   = 0; // X — of those, how many correct
+        const issueTally = {
+            'language-issue':    0,
+            'newness-issue':     0,
+            'retention-issue':   0,
+            'strategy-issue':    0,
+            'calculation-issue': 0,
+        };
+        const ISSUE_LABELS = {
+            'language-issue':    'Language issue',
+            'newness-issue':     'Newness issue',
+            'retention-issue':   'Retention issue',
+            'strategy-issue':    'Strategy issue',
+            'calculation-issue': 'Calculation issue',
+        };
+        // Fixed per-issue advice for the session-complete recommendation — keyed to
+        // match ISSUE_LABELS/issueTally so renderRecommendation can look both up together.
+        const ISSUE_ADVICE = {
+            'language-issue':    "You're facing challenges with English. That's completely normal. You don't need to master English overnight. You only need to master the English used in exams. If you'd like help, feel free to contact me.",
+            'newness-issue':     "You're simply new to the topic. Keep practising consistently, and you'll improve quickly. Contact me if you need lots of practice questions.",
+            'retention-issue':   "This isn't a big deal. You just need to work harder and revise regularly. No need to contact me for this.",
+            'strategy-issue':    "You need to improve clarity of thinking rather than memorising steps. You must contact me for help.",
+            'calculation-issue': "Keep a journal of the silly mistakes you make, and review it regularly. Simply becoming aware of your mistakes will help you eliminate them. Contact me if you need lots of practice questions.",
+        };
+
+        // Effective elapsed time since the response clock started.
+        // Always derived from real timestamps (performance.now), never from
+        // accumulated tick counts, so it can't drift.
+        function effectiveElapsedMs() {
+            if (countdownStart === null) return 0;
+            return performance.now() - countdownStart;
+        }
+
+        function formatSeconds(ms) {
+            return (ms / 1000).toFixed(3) + 's';
+        }
+
+        options.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (submitted) return;
+                options.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedOption = btn.dataset.option;
+                submitBtn.disabled = false;
+            });
+        });
+
+        submitBtn.addEventListener('click', () => {
+            if (!selectedOption || submitted) return;
+            submitted = true;
+            responseTimeMs = effectiveElapsedMs(); // captured once, precisely, right here
+            cancelAnimationFrame(rafId);
+
+            const isCorrect = selectedOption === CORRECT_OPTION;
+            lastAnswerCorrect = isCorrect;
+            globe.classList.remove('running', 'warning', 'overtime');
+            globe.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+            options.forEach(b => {
+                b.disabled = true;
+                if (b.dataset.option === CORRECT_OPTION) {
+                    b.classList.add('correct');
+                } else if (b.dataset.option === selectedOption) {
+                    b.classList.add('incorrect');
+                }
+            });
+            submitBtn.disabled = true;
+            timerLabel.textContent = 'Response Time';
+            timerNum.textContent = formatSeconds(responseTimeMs);
+
+            setTimeout(() => goToResultsScreen(isCorrect, responseTimeMs / 1000), RESULTS_DELAY_MS);
+        });
+
+        const MAX_OVERTIME_MS = 999000; // display floor only; the captured response time is never clamped
+
+        function renderFrame() {
+            if (countdownStart !== null && !submitted) {
+                const elapsedMs = effectiveElapsedMs();
+                let remainingMs = COUNT_FROM * 1000 - elapsedMs;
+                const atFloor = remainingMs <= -MAX_OVERTIME_MS;
+                if (atFloor) remainingMs = -MAX_OVERTIME_MS;
+                timerNum.textContent = formatSeconds(remainingMs);
+
+                if (remainingMs < 0) {
+                    if (!globe.classList.contains('overtime')) {
+                        globe.classList.remove('running', 'warning');
+                        globe.classList.add('overtime');
+                    }
+                } else if (elapsedMs >= (COUNT_FROM * 1000) / 2) {
+                    if (!globe.classList.contains('warning')) {
+                        globe.classList.remove('running');
+                        globe.classList.add('warning');
+                    }
+                }
+
+                if (atFloor) return; // nothing left to animate once the floor is hit
+            }
+            rafId = requestAnimationFrame(renderFrame);
+        }
+
+        // Keep the globe's top edge aligned with the top of the first option,
+        // regardless of how much space the question text above it takes up.
+        // Note: .quiz-wrap uses flex-wrap: wrap-reverse, which swaps the cross-axis
+        // start/end, so it's margin-bottom (not margin-top) that actually moves a
+        // flex-start-aligned item here.
+        // Below the mobile breakpoint the timer col is a fixed bottom bar instead
+        // (see the @media block), so this alignment doesn't apply there.
+        const mobileQuery = window.matchMedia('(max-width: 760px)');
+
+        function alignGlobeTop() {
+            timerCol.style.marginBottom = '0px';
+            if (mobileQuery.matches) return;
+            const firstOption = document.querySelector('#quizOptions li');
+            if (!firstOption) return;
+            const diff = globe.getBoundingClientRect().top - firstOption.getBoundingClientRect().top;
+            timerCol.style.marginBottom = diff + 'px';
+        }
+
+        window.addEventListener('load', alignGlobeTop);
+        window.addEventListener('resize', alignGlobeTop);
+
+        // ── Results / diagnostics / session-complete screens ────────────
+
+        const quizWrap        = document.getElementById('quizWrap');
+        const resultsWrap     = document.getElementById('resultsWrap');
+        const resultsHeadline = document.getElementById('resultsHeadline');
+        const resultsCaption  = document.getElementById('resultsCaption');
+        const chartWrap       = document.getElementById('chartWrap');
+        const solutionQuestion = document.getElementById('solutionQuestion');
+        const quizQuestionEl  = document.querySelector('.quiz-question');
+        const reflectCheckboxes = document.querySelectorAll('#reflectOptions input[type="checkbox"]');
+        const reflectNextBtn  = document.getElementById('reflectNextBtn');
+
+        const diagnosticsWrap    = document.getElementById('diagnosticsWrap');
+        const diagnosticsCaption = document.getElementById('diagnosticsCaption');
+        const diagnosticsBarGraph = document.getElementById('diagnosticsBarGraph');
+        const nextQuestionBtn    = document.getElementById('nextQuestionBtn');
+
+        const sessionCompleteWrap    = document.getElementById('sessionCompleteWrap');
+        const sessionCompleteCaption = document.getElementById('sessionCompleteCaption');
+        const sessionCompleteBarGraph = document.getElementById('sessionCompleteBarGraph');
+        const recommendSection = document.getElementById('recommendSection');
+
+        // Abramowitz-Stegun approximation — accurate to ~1e-7, plenty for a rank display.
+        function erf(x) {
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x);
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const t = 1 / (1 + p * x);
+            const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return sign * y;
+        }
+
+        function normalCDF(x, mean, sd) {
+            return 0.5 * (1 + erf((x - mean) / (sd * Math.sqrt(2))));
+        }
+
+        // Response times are strictly positive and right-skewed (a long tail of slow
+        // answers, a hard floor at 0) — log-normal fits that shape far better than a
+        // symmetric gaussian, and reuses the same erf machinery via ln(x).
+        function lognormalPDF(x, mu, sigma) {
+            if (x <= 0) return 0;
+            const z = (Math.log(x) - mu) / sigma;
+            return Math.exp(-0.5 * z * z) / (x * sigma * Math.sqrt(2 * Math.PI));
+        }
+
+        function lognormalCDF(x, mu, sigma) {
+            if (x <= 0) return 0;
+            return normalCDF(Math.log(x), mu, sigma);
+        }
+
+        // Fixed seed so the "noisy" cohort curve looks the same on every load —
+        // it should read as one fixed dataset, not something that reshuffles on refresh.
+        function mulberry32(seed) {
+            return function () {
+                seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+                let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        // Builds the noisy response-time chart as an SVG string. Population shape
+        // comes from the log-normal RT_MU/RT_SIGMA; the per-sample jitter is what
+        // keeps it reading as real (noisy) data rather than a textbook curve.
+        function buildChartSVG(responseTimeSec) {
+            const W = 640, H = 260;
+            const marginLeft = 30, marginRight = 30, marginTop = 26, marginBottom = 40;
+            const plotW = W - marginLeft - marginRight;
+            const plotH = H - marginTop - marginBottom;
+            const baseline = marginTop + plotH;
+            const domainMax = Math.max(60, Math.ceil((responseTimeSec + 8) / 10) * 10);
+            const mapX = t => marginLeft + (t / domainMax) * plotW;
+
+            const rand = mulberry32(20260711);
+            const STEPS = 90;
+            const rawPoints = [];
+            for (let i = 0; i <= STEPS; i++) {
+                const t = (i / STEPS) * domainMax;
+                const pdf = lognormalPDF(t, RT_MU, RT_SIGMA);
+                const noise = 1 + (rand() - 0.5) * 0.4; // ±20% jitter — enough to read as sampled, not theoretical
+                rawPoints.push({ t, v: Math.max(0, pdf * noise) });
+            }
+            const maxV = Math.max(...rawPoints.map(p => p.v));
+            const mapY = v => baseline - (v / maxV) * plotH * 0.86;
+
+            const linePts = rawPoints.map(p => `${mapX(p.t).toFixed(1)},${mapY(p.v).toFixed(1)}`).join(' L ');
+            const areaPath = `M ${mapX(0).toFixed(1)},${baseline.toFixed(1)} L ${linePts} L ${mapX(domainMax).toFixed(1)},${baseline.toFixed(1)} Z`;
+            const linePath = `M ${linePts}`;
+
+            // P10/P25/P75 keep their dashed reference lines but not a text label — with
+            // four labels crammed into a ~26px-tall strip they crowded each other and
+            // the "YOU ARE HERE" callout; only the median is called out by name now.
+            const percentiles = [
+                { label: 'P10',    z: -1.2816 },
+                { label: 'P25',    z: -0.6745 },
+                { label: 'Median', z: 0 },
+                { label: 'P75',    z: 0.6745 },
+            ].map(p => ({ ...p, t: Math.exp(RT_MU + p.z * RT_SIGMA) }));
+
+            const pctLines = percentiles.map(p => {
+                const x = mapX(p.t).toFixed(1);
+                const label = p.label === 'Median'
+                    ? `<text class="pct-label" x="${x}" y="${marginTop + 11}" text-anchor="middle">${p.label} · ${p.t.toFixed(0)}s</text>`
+                    : '';
+                return `<line class="pct-line" x1="${x}" y1="${marginTop}" x2="${x}" y2="${baseline}"></line>${label}`;
+            }).join('');
+
+            const ticks = [];
+            for (let t = 0; t <= domainMax; t += 10) ticks.push(t);
+            const tickMarks = ticks.map(t => {
+                const x = mapX(t).toFixed(1);
+                return `<line class="axis-tick" x1="${x}" y1="${baseline}" x2="${x}" y2="${baseline + 5}"></line>` +
+                    `<text class="tick-label" x="${x}" y="${baseline + 18}" text-anchor="middle">${t}s</text>`;
+            }).join('');
+
+            const dotT = Math.min(Math.max(responseTimeSec, 0), domainMax);
+            const dotX = mapX(dotT);
+            const dotY = mapY(lognormalPDF(dotT, RT_MU, RT_SIGMA));
+            // The label needs to clear two things: the median-label strip near the top
+            // (marginTop..marginTop+28), and the curve line itself, which can rise
+            // steeply right next to the dot — an 18px leader wasn't enough clearance
+            // and the label text ended up brushing the curve. 34px leaves real air.
+            const LEADER_LEN = 34;
+            const labelAbove = dotY > marginTop + 28 + LEADER_LEN + 12;
+            const leaderEndY = labelAbove ? dotY - LEADER_LEN : dotY + LEADER_LEN;
+            const labelY = labelAbove ? leaderEndY - 8 : leaderEndY + 14;
+            // "YOU ARE HERE" is centered on the dot by default, but a fast (near-zero)
+            // or very slow response time lands the dot right at a chart edge — anchor
+            // the label to that edge instead so it can't run outside the viewBox and clip.
+            const nearLeftEdge = dotX < marginLeft + 55;
+            const nearRightEdge = dotX > (W - marginRight) - 55;
+            const labelAnchor = nearLeftEdge ? 'start' : nearRightEdge ? 'end' : 'middle';
+            const labelX = nearLeftEdge ? marginLeft : nearRightEdge ? (W - marginRight) : dotX;
+
+            return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Distribution of response times across all students, with your response time marked">
+                <defs>
+                    <linearGradient id="curveFillGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="rgba(165,28,48,0.16)"></stop>
+                        <stop offset="100%" stop-color="rgba(165,28,48,0.015)"></stop>
+                    </linearGradient>
+                </defs>
+                <path class="curve-area" d="${areaPath}"></path>
+                <path class="curve-line" d="${linePath}"></path>
+                ${pctLines}
+                <line class="axis-line" x1="${marginLeft}" y1="${baseline.toFixed(1)}" x2="${W - marginRight}" y2="${baseline.toFixed(1)}"></line>
+                ${tickMarks}
+                <text class="axis-caption" x="${W / 2}" y="${H - 4}" text-anchor="middle">Response time</text>
+                <line class="you-leader" x1="${dotX.toFixed(1)}" y1="${leaderEndY.toFixed(1)}" x2="${dotX.toFixed(1)}" y2="${dotY.toFixed(1)}"></line>
+                <circle class="you-dot" cx="${dotX.toFixed(1)}" cy="${dotY.toFixed(1)}" r="7"></circle>
+                <text class="you-label" x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="${labelAnchor}">YOU ARE HERE</text>
+            </svg>`;
+        }
+
+        function renderResults(isCorrect, responseTimeSec) {
+            // Math.max(60, NaN) is NaN, not 60 — a bad responseTimeSec (NaN/undefined/
+            // negative) would otherwise poison domainMax in buildChartSVG and every
+            // coordinate downstream, collapsing the curve to an invalid SVG path (it
+            // silently fails to render, leaving only the flat axis-line behind — reads
+            // as "the chart turned into a straight line"). Clamped once here so every
+            // caller downstream (chart + rank) is guaranteed a valid, non-negative number.
+            if (!Number.isFinite(responseTimeSec) || responseTimeSec < 0) responseTimeSec = 0;
+
+            resultsHeadline.textContent = isCorrect ? 'Correct! See your response time.' : 'Wrong! See your response time.';
+            resultsHeadline.classList.toggle('correct', isCorrect);
+            resultsHeadline.classList.toggle('incorrect', !isCorrect);
+
+            if (isCorrect) {
+                const rank = Math.min(100, Math.max(1, Math.round(100 * lognormalCDF(responseTimeSec, RT_MU, RT_SIGMA))));
+                resultsCaption.innerHTML = `Your rank is <strong>${rank}</strong>/100`;
+                resultsCaption.classList.remove('warn');
+            } else {
+                resultsCaption.textContent = 'Your response time has no meaning as you got it wrong.';
+                resultsCaption.classList.add('warn');
+            }
+
+            chartWrap.innerHTML = buildChartSVG(responseTimeSec);
+
+            // Copied live from the quiz screen rather than duplicated in the HTML,
+            // so the two can't drift once real per-question text replaces the
+            // placeholder Lorem ipsum.
+            solutionQuestion.textContent = quizQuestionEl.textContent;
+        }
+
+        // Fades fromEl out, then swaps [hidden]/is-visible so toEl fades in — the one
+        // transition primitive used for all four screens (quiz/results/diagnostics/
+        // session-complete). body's professional (non-photo) background stays on for
+        // every screen except the quiz itself. onShown (optional) fires once toEl is
+        // actually visible — used to delay starting the next question's timer until
+        // the student can see the screen it's counting down on.
+        function switchScreen(fromEl, toEl, onShown) {
+            fromEl.classList.add('is-hiding');
+            setTimeout(() => {
+                fromEl.hidden = true;
+                fromEl.classList.remove('is-hiding', 'is-visible');
+                toEl.hidden = false;
+                document.body.classList.toggle('results-active', toEl !== quizWrap);
+                window.scrollTo(0, 0); // the previous screen may have been scrolled; the new one starts at its own top
+                void toEl.offsetWidth; // force a reflow so the opacity transition below actually runs
+                toEl.classList.add('is-visible');
+                if (onShown) onShown();
+            }, 400); // matches .screen's opacity transition duration
+        }
+
+        function goToResultsScreen(isCorrect, responseTimeSec) {
+            renderResults(isCorrect, responseTimeSec);
+            switchScreen(quizWrap, resultsWrap);
+        }
+
+        // Five separate horizontal bars, 100%-normalized against total non-random-click
+        // diagnoses logged so far (each checked box is one full vote — see the plan).
+        // Shared by both the per-question diagnostics screen and the final summary.
+        function renderBarGraph(container, tally) {
+            const totalVotes = Object.values(tally).reduce((a, b) => a + b, 0);
+            container.innerHTML = Object.keys(ISSUE_LABELS).map(key => {
+                const pct = totalVotes === 0 ? 0 : Math.round(100 * tally[key] / totalVotes);
+                return `
+                    <div class="bar-row">
+                        <span class="bar-label">${ISSUE_LABELS[key]}</span>
+                        <span class="bar-track"><span class="bar-fill" style="width:${pct}%"></span></span>
+                        <span class="bar-pct">${pct}%</span>
+                    </div>`;
+            }).join('');
+        }
+
+        function renderDiagnostics() {
+            diagnosticsCaption.textContent =
+                `You got ${correctCount} out of ${attemptedCount} correct. Let's talk about your speed diagnostics based on non-random clicks.`;
+            renderBarGraph(diagnosticsBarGraph, issueTally);
+        }
+
+        const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five'];
+        const BULLET_LETTERS = ['a', 'b', 'c', 'd', 'e'];
+
+        // Picks the issue(s) with the highest vote count (ties included — a student
+        // can genuinely be equally weak in two areas) and writes the fixed advice for
+        // each. Left blank if no non-random-click diagnosis was ever logged, since
+        // there's nothing to base a recommendation on.
+        function renderRecommendation(container, tally) {
+            const totalVotes = Object.values(tally).reduce((a, b) => a + b, 0);
+            if (totalVotes === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const maxVotes = Math.max(...Object.values(tally));
+            const topIssues = Object.keys(ISSUE_LABELS).filter(key => tally[key] === maxVotes);
+            const names = topIssues.map(key => ISSUE_LABELS[key]);
+
+            let namesText;
+            if (names.length === 1) {
+                namesText = names[0];
+            } else if (names.length === 2) {
+                namesText = `${names[0]} and ${names[1]}`;
+            } else {
+                namesText = `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+            }
+
+            const intro = names.length === 1
+                ? `Your biggest issue is ${namesText}. I suggest you do the following:`
+                : `Your ${NUMBER_WORDS[names.length]} biggest issues are ${namesText}. I suggest you do the following:`;
+
+            const bullets = names.length === 1
+                ? `<p class="recommend-bullet">${ISSUE_ADVICE[topIssues[0]]}</p>`
+                : topIssues.map((key, i) => `<p class="recommend-bullet">${BULLET_LETTERS[i]}) ${ISSUE_ADVICE[key]}</p>`).join('');
+
+            container.innerHTML = `
+                <p class="recommend-heading">Recommended for you</p>
+                <p class="recommend-intro">${intro}</p>
+                ${bullets}`;
+        }
+
+        function renderSessionComplete() {
+            sessionCompleteCaption.textContent = `You got ${correctCount} out of ${attemptedCount} correct.`;
+            renderBarGraph(sessionCompleteBarGraph, issueTally);
+            renderRecommendation(recommendSection, issueTally);
+        }
+
+        // Resets the quiz screen for question `index` and starts its timer. Called once
+        // on page load (index = 1) and again from the Next Question button — every
+        // reset here undoes something the submit/reflect flow changed for the previous
+        // question, so this list only grows if a future field starts persisting state
+        // that shouldn't carry over.
+        function startQuestion(index) {
+            currentQuestionIndex = index;
+            CORRECT_OPTION = QUESTIONS[index - 1].correct;
+            questionCount.textContent = `Question ${index} of ${QUESTION_TOTAL}`;
+
+            selectedOption = null;
+            submitted = false;
+            lastAnswerCorrect = false;
+            responseTimeMs = null;
+
+            options.forEach(b => {
+                b.disabled = false;
+                b.classList.remove('selected', 'correct', 'incorrect');
+            });
+            submitBtn.disabled = true;
+
+            globe.classList.remove('correct', 'incorrect', 'warning', 'overtime');
+            globe.classList.add('running');
+            timerLabel.textContent = 'Time Left';
+            timerNum.textContent = formatSeconds(COUNT_FROM * 1000);
+
+            cancelAnimationFrame(rafId);
+            countdownStart = performance.now(); // clock starts immediately, no reading grace period
+            rafId = requestAnimationFrame(renderFrame);
+
+            reflectCheckboxes.forEach(cb => {
+                cb.checked = false;
+                cb.closest('.reflect-option').classList.remove('is-checked');
+            });
+            reflectNextBtn.disabled = true;
+
+            alignGlobeTop();
+        }
+
+        reflectCheckboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                cb.closest('.reflect-option').classList.toggle('is-checked', cb.checked);
+                reflectNextBtn.disabled = !Array.from(reflectCheckboxes).some(c => c.checked);
+            });
+        });
+
+        reflectNextBtn.addEventListener('click', () => {
+            if (reflectNextBtn.disabled) return;
+
+            attemptedCount += 1;
+            if (lastAnswerCorrect) correctCount += 1;
+            reflectCheckboxes.forEach(cb => {
+                if (cb.checked && cb.value !== 'random-click') {
+                    issueTally[cb.value] += 1;
+                }
+            });
+
+            renderDiagnostics();
+            switchScreen(resultsWrap, diagnosticsWrap);
+        });
+
+        nextQuestionBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < QUESTION_TOTAL) {
+                switchScreen(diagnosticsWrap, quizWrap, () => startQuestion(currentQuestionIndex + 1));
+            } else {
+                renderSessionComplete();
+                switchScreen(diagnosticsWrap, sessionCompleteWrap);
+            }
+        });
+
+        startQuestion(1);
+    </script>
+</body>
+</html>
