@@ -26,15 +26,6 @@
     <meta name="twitter:description" content="All 35 JEE Main Mathematics topics, in 20 minutes each.">
     <meta name="twitter:image"       content="https://english.math.4sh.education/img/hero-math.webp">
 
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RVZHNG0TMM"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-RVZHNG0TMM');
-    </script>
-
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="favicon.svg">
 
@@ -60,7 +51,11 @@
 
     <link rel="preload" as="image" href="img/hero-math.webp" fetchpriority="high">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <!-- Loaded non-render-blocking: math styling isn't needed until a chapter
+         scrolls into view (see the lazy KaTeX render script at the end of
+         body), so this shouldn't hold up first paint of the hero section. -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"></noscript>
     <style>
       /* Inline math should sit on the text baseline, not force extra line-height */
       .katex-display { margin: 1.2em 0; overflow-x: auto; overflow-y: hidden; }
@@ -1825,6 +1820,17 @@ Gondhorbomadan chotpot uthe bollo, “Sir, amader bari-te ami shoptahe 15-ta tha
         });
       }, { rootMargin: '600px 0px' });
       document.querySelectorAll('.topic-slab').forEach(el => mathObserver.observe(el));
+    </script>
+
+    <!-- Google Analytics -- loaded last so it doesn't compete for connection
+         slots with the hero image / stylesheet on a slow mobile connection
+         during the critical first-paint window. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RVZHNG0TMM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-RVZHNG0TMM');
     </script>
 </body>
 </html>
