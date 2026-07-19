@@ -37,7 +37,14 @@
    can't happen -- see the render-on-click logic at the end of body, which
    pre-renders just the destination section before the jump so there's no
    flash of unrendered math either. */
-html { font-size: 20px; }
+/* overflow-x:hidden needs to be on html, not just body -- <html> is the
+   actual root scrolling element on many mobile browsers, so body-only
+   overflow-x:hidden (below) can fail to suppress a page-level horizontal
+   scrollbar on some real Android Chrome versions even though it works fine
+   on desktop/iOS Safari. Confirmed real symptom: a literal horizontal
+   scrollbar at the bottom of the page on a real device, with the fixed
+   header rendering as if relative to that wider, unclipped layout. */
+html { font-size: 20px; overflow-x: hidden; max-width: 100%; }
 
 /* Every anchor-jump target (nav links, dropdown chapter links) needs this —
    otherwise the fixed header lands flush over the top of the section and
