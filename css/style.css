@@ -262,7 +262,9 @@ a   { text-decoration: none; color: inherit; }
     overflow-y: auto;
     font-family: var(--font-sans);
 }
-.mobile-nav.open { right: 0; }
+@media (max-width: 900px) {
+    .mobile-nav.open { right: 0; }
+}
 
 .mobile-nav nav {
     display: flex;
@@ -298,7 +300,9 @@ a   { text-decoration: none; color: inherit; }
     background: rgba(0,0,0,0.4);
     z-index: 1999;
 }
-.mobile-nav-overlay.open { display: block; }
+@media (max-width: 900px) {
+    .mobile-nav-overlay.open { display: block; }
+}
 
 /* ═══════════════════════════════════════════
    SLAB — BASE

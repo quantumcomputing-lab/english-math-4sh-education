@@ -11,14 +11,24 @@ function openNav() {
     mobileNav.classList.add('open');
     navOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+    hamburger?.setAttribute('aria-expanded', 'true');
+    hamburger?.setAttribute('aria-label', 'Close menu');
 }
 function closeNav() {
     mobileNav.classList.remove('open');
     navOverlay.classList.remove('open');
     document.body.style.overflow = '';
+    hamburger?.setAttribute('aria-expanded', 'false');
+    hamburger?.setAttribute('aria-label', 'Open menu');
 }
 
-hamburger?.addEventListener('click', openNav);
+hamburger?.addEventListener('click', () => {
+    if (mobileNav.classList.contains('open')) {
+        closeNav();
+    } else {
+        openNav();
+    }
+});
 navClose?.addEventListener('click', closeNav);
 navOverlay?.addEventListener('click', closeNav);
 mobileLinks.forEach(link => link.addEventListener('click', closeNav));
@@ -35,18 +45,18 @@ topicsToggle?.addEventListener('click', (e) => {
 document.addEventListener('click', (e) => {
     if (topicsDropdown?.classList.contains('open') && !topicsDropdown.contains(e.target)) {
         topicsDropdown.classList.remove('open');
-        topicsToggle.setAttribute('aria-expanded', 'false');
+        topicsToggle?.setAttribute('aria-expanded', 'false');
     }
 });
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && topicsDropdown?.classList.contains('open')) {
         topicsDropdown.classList.remove('open');
-        topicsToggle.setAttribute('aria-expanded', 'false');
+        topicsToggle?.setAttribute('aria-expanded', 'false');
     }
 });
 topicsDropdown?.querySelectorAll('.topics-menu a').forEach(a => a.addEventListener('click', () => {
     topicsDropdown.classList.remove('open');
-    topicsToggle.setAttribute('aria-expanded', 'false');
+    topicsToggle?.setAttribute('aria-expanded', 'false');
 }));
 
 // ── Scroll Fade-in ──
@@ -92,9 +102,9 @@ const backToTop = document.getElementById('backToTop');
 
 window.addEventListener('scroll', () => {
     if (window.scrollY > 400) {
-        backToTop.classList.add('visible');
+        backToTop?.classList.add('visible');
     } else {
-        backToTop.classList.remove('visible');
+        backToTop?.classList.remove('visible');
     }
 }, { passive: true });
 
