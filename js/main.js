@@ -72,6 +72,49 @@ const observer = new IntersectionObserver((entries) => {
 
 fadeEls.forEach(el => observer.observe(el));
 
+// ── Lazy KaTeX hydration ──
+// Math is pre-rendered to static HTML at build time (tools/build-katex.js),
+// but stashed inside a <template class="katex-tpl"> per chapter instead of
+// being inlined directly -- template content is parsed but not part of the
+// live DOM/render tree, so it costs nothing until cloned in. Each chapter's
+// prose carries lightweight <span class="katex-lazy">$raw latex$</span>
+// placeholders in the meantime. This only ever swaps in already-computed
+// nodes (no LaTeX parsing happens here, just a DOM clone), spreading that
+// cost across the scroll session the same way the site's math rendering
+// always has, instead of paying for all 35 chapters' worth of markup on
+// first paint.
+function hydrateMath(section) {
+  if (!section || section.dataset.mathHydrated) return;
+  const template = section.querySelector('template.katex-tpl');
+  if (!template) { section.dataset.mathHydrated = 'true'; return; }
+  const rendered = [...template.content.children];
+  const placeholders = section.querySelectorAll('.katex-lazy');
+  placeholders.forEach((placeholder, i) => {
+    if (rendered[i]) placeholder.replaceWith(rendered[i]);
+  });
+  template.remove();
+  section.dataset.mathHydrated = 'true';
+  mathObserver.unobserve(section);
+}
+
+const mathObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) hydrateMath(entry.target);
+  });
+}, { rootMargin: '600px 0px' });
+document.querySelectorAll('.topic-slab').forEach(el => mathObserver.observe(el));
+
+// Every in-page anchor link (nav, dropdown, footer sitemap) must land on a
+// destination whose math is already hydrated -- otherwise the section's
+// height can still change right after landing (a visible flash).
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', () => {
+    const id = link.getAttribute('href').slice(1);
+    const target = id && document.getElementById(id);
+    if (target) hydrateMath(target);
+  });
+});
+
 // ── Active nav highlight on scroll ──
 const sections = document.querySelectorAll('section[id]');
 const navLinks = document.querySelectorAll('.desktop-nav a');
