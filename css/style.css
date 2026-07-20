@@ -761,6 +761,19 @@ a   { text-decoration: none; color: inherit; }
 }
 .fade-in.visible { opacity: 1; transform: translateY(0); }
 
+/* The hero is always in the initial viewport, so its reveal can't wait on
+   an IntersectionObserver in js/main.js -- that script only runs after the
+   browser finishes parsing the entire (400KB+) document, which was gating
+   the LCP paint behind a multi-second delay on throttled mobile. Same
+   visual effect, no JS dependency. */
+.slab-text-first {
+    animation: heroFadeIn 0.7s ease both;
+}
+@keyframes heroFadeIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ═══════════════════════════════════════════
    BACK TO TOP
 ═══════════════════════════════════════════ */
@@ -838,7 +851,11 @@ a   { text-decoration: none; color: inherit; }
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: var(--crimson);
+    /* var(--crimson) is 2.22:1 on this footer's #1e1e1e background (fails
+       WCAG AA's 4.5:1) -- it's fine everywhere else it's used, all against
+       light backgrounds, so this is a scoped override, not a brand-color
+       change. #c97783 is the same hue lightened to 5.12:1. */
+    color: #c97783;
     margin-bottom: 1.25rem;
     font-weight: 700;
 }
