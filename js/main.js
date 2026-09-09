@@ -144,6 +144,112 @@ document.querySelectorAll('.btn-whatsapp').forEach(btn => {
     });
 });
 
+// ── Book preview carousel (ported from Foundation_Site's infographic
+//    carousel: bookend arrow buttons + click-and-drag scrolling) ──
+const carouselTrack = document.getElementById('bookCarousel');
+const carouselPrev  = document.getElementById('carouselPrev');
+const carouselNext  = document.getElementById('carouselNext');
+
+if (carouselTrack && carouselPrev && carouselNext) {
+    const cardStep = () => {
+        const card = carouselTrack.querySelector('.carousel-item');
+        if (!card) return carouselTrack.clientWidth * 0.8;
+        const gap = parseFloat(getComputedStyle(carouselTrack).gap) || 0;
+        return card.getBoundingClientRect().width + gap;
+    };
+
+    carouselPrev.addEventListener('click', () => {
+        carouselTrack.scrollBy({ left: -cardStep(), behavior: 'smooth' });
+    });
+    carouselNext.addEventListener('click', () => {
+        carouselTrack.scrollBy({ left: cardStep(), behavior: 'smooth' });
+    });
+
+    const updateArrowState = () => {
+        const max = carouselTrack.scrollWidth - carouselTrack.clientWidth - 1;
+        carouselPrev.classList.toggle('is-disabled', carouselTrack.scrollLeft <= 0);
+        carouselNext.classList.toggle('is-disabled', carouselTrack.scrollLeft >= max);
+    };
+
+    carouselTrack.addEventListener('scroll', updateArrowState, { passive: true });
+    window.addEventListener('resize', updateArrowState);
+    updateArrowState();
+
+    // ── Click-and-drag scrolling with the mouse (touch already works natively) ──
+    let isDragging = false;
+    let dragMoved = false;
+    let dragStartX = 0;
+    let dragStartScroll = 0;
+
+    carouselTrack.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        dragMoved = false;
+        dragStartX = e.pageX;
+        dragStartScroll = carouselTrack.scrollLeft;
+        carouselTrack.classList.add('dragging');
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.pageX - dragStartX;
+        if (Math.abs(dx) > 4) dragMoved = true;
+        carouselTrack.scrollLeft = dragStartScroll - dx;
+    });
+
+    const endDrag = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        carouselTrack.classList.remove('dragging');
+    };
+    window.addEventListener('mouseup', endDrag);
+    carouselTrack.addEventListener('mouseleave', endDrag);
+
+    // ── Lightbox — open the clicked card's image full size in place.
+    //    Suppress the open if the mouse actually dragged (same guard the
+    //    Foundation_Site carousel uses to stop a drag-release from
+    //    triggering its card's link). ──
+    const lightbox    = document.getElementById('imageLightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxClose = document.getElementById('lightboxClose');
+    let lastFocused = null;
+
+    function openLightbox(fullSrc, alt) {
+        lightboxImg.src = fullSrc;
+        lightboxImg.alt = alt || '';
+        lightbox.classList.add('open');
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        lastFocused = document.activeElement;
+        lightboxClose.focus();
+    }
+    function closeLightbox() {
+        lightbox.classList.remove('open');
+        lightbox.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        lightboxImg.src = '';
+        lastFocused?.focus();
+    }
+
+    carouselTrack.addEventListener('click', (e) => {
+        if (dragMoved) {
+            e.preventDefault();
+            e.stopPropagation();
+            dragMoved = false;
+            return;
+        }
+        const card = e.target.closest('.carousel-item');
+        if (card) openLightbox(card.dataset.full, card.dataset.alt);
+    }, true);
+
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+    });
+}
+
 // ── Back to top ──
 const backToTop = document.getElementById('backToTop');
 

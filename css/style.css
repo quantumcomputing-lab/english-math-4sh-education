@@ -585,11 +585,14 @@ a   { text-decoration: none; color: inherit; }
     margin: 0.85rem 0;
     padding: 0.6rem 1rem;
 }
-/* .btn-chapter-cta's own base rule centers it (width:fit-content;
-   margin:2rem auto 0), which suited the old centered 760px column --
-   here it sits in a left-aligned full-bleed text panel instead, so it
-   should hug the same left edge as the paragraphs above it. */
-.slab-inner-full .btn-chapter-cta { margin: 1.25rem 0 0; }
+/* Was left-aligned to hug the same edge as the paragraphs above it (see
+   old comment in git history), but the CTA is now a 3-line ₹9 promo
+   message rather than a single inline link -- that reads as a distinct
+   callout block, not body text, so it's centred like the base rule
+   already does for the old narrow-column layout, just re-declared here
+   since .slab-inner-full's own width:auto/margin:0 rules would otherwise
+   override the base rule's margin. */
+.slab-inner-full .btn-chapter-cta { margin: 1.25rem auto 0; }
 
 .slab .slab-definition {
     font-family: var(--font-sans);
@@ -640,7 +643,42 @@ a   { text-decoration: none; color: inherit; }
     font-weight: 700;
 }
 .cred-note { color: var(--muted); font-size: 0.85rem; }
-.founder-photo img { object-position: center 8%; }
+/* The photo's own portrait aspect ratio (696x953) at a full 50/50 grid
+   column renders ~730px tall -- nearly double the credentials list next
+   to it (~360px) -- which was dragging the whole slab's row height (and
+   therefore its top/bottom whitespace) up with it. A cropped-height fix
+   (object-fit:cover at a short definite height) was tried first, but a
+   close-up headshot has almost no slack to crop without cutting into the
+   face -- this photo's cap-to-chin framing already fills nearly the
+   whole source image. So the real fix is to shrink the photo's WIDTH
+   instead, keeping its native aspect ratio (no cropping at all): at
+   ~270px wide it renders ~370px tall, close to the credentials column,
+   with the entire face and cap still in frame. */
+#founder { padding: 2.5rem 0; }
+#founder .slab-inner { align-items: start; }
+.founder-photo {
+    align-self: start;
+    height: auto;
+    width: 100%;
+    max-width: 270px;
+    margin: 0 auto;
+}
+.founder-photo img { height: auto; object-position: center 8%; }
+
+.btn-linkedin {
+    display: inline-block;
+    background: #000;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 0.9rem 2rem;
+    border-radius: 4px;
+    margin-top: 1.5rem;
+    transition: background var(--transition);
+}
+.btn-linkedin:hover { background: #222; }
 
 /* ── Section label ── */
 .section-label {
@@ -737,7 +775,7 @@ a   { text-decoration: none; color: inherit; }
 .slab-first-inner {
     position: relative;
     z-index: 2;
-    max-width: 780px;
+    max-width: 878px;
     /* Was 5rem top/bottom -- on shorter laptop viewports that padding
        plus the vertically-centered text block's own height added up to
        taller than calc(100vh - header), pushing the last line (hero-note)
@@ -783,6 +821,184 @@ a   { text-decoration: none; color: inherit; }
     font-size: 0.78rem;
     color: rgba(255,255,255,0.55);
     margin-top: 1.25rem !important;
+}
+
+/* ═══════════════════════════════════════════
+   BOOK PREVIEW CAROUSEL — ported from Foundation_Site's infographic
+   carousel (same tall flat-triangle "bookend" arrows, drag-to-scroll
+   track), re-scoped to this site's crimson (already the same #A51C30 in
+   both --crimson variables, so no recolouring needed) and to these
+   images' 1080x1350 (4:5) aspect ratio instead of 1560x1174.
+═══════════════════════════════════════════ */
+.carousel-header {
+    max-width: 700px;
+    margin: 0 auto 2.5rem;
+    padding: 0 2rem;
+    text-align: center;
+}
+.carousel-header .section-label { margin-bottom: 0.75rem; }
+.carousel-header h2 { margin-bottom: 0.75rem; }
+.carousel-header .slab-subhead { margin-bottom: 0 !important; }
+
+.carousel-wrap {
+    position: relative;
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 4.5rem;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 0.25rem 1rem;
+    scrollbar-width: none;
+    cursor: grab;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-track.dragging {
+    cursor: grabbing;
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+    user-select: none;
+}
+
+/* Card is a <button>, not an <a>, since clicking opens the lightbox in
+   place rather than navigating -- reset button chrome back to the same
+   clean frame the old anchor-based version used. */
+.carousel-item {
+    flex: 0 0 auto;
+    width: min(290px, 70vw);
+    scroll-snap-align: start;
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(30,30,30,0.10);
+    box-shadow: 0 10px 28px rgba(30,30,30,0.10);
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+.carousel-item:hover,
+.carousel-item:focus-visible {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 44px rgba(30,30,30,0.16);
+    border-color: rgba(165,28,48,0.35);
+}
+.carousel-item img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1080 / 1350;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+/* ── Tall flat-triangle scroll prompts (deliberately not circular chevrons) ── */
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 168px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1px solid rgba(30,30,30,0.12);
+    box-shadow: 0 6px 20px rgba(30,30,30,0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    z-index: 2;
+    transition: background var(--transition), box-shadow var(--transition), border-color var(--transition), opacity var(--transition);
+}
+.carousel-arrow:hover {
+    background: var(--bg-alt);
+    border-color: rgba(165,28,48,0.35);
+    box-shadow: 0 10px 26px rgba(30,30,30,0.18);
+}
+.carousel-arrow-left  { left: 0; }
+.carousel-arrow-right { right: 0; }
+.carousel-arrow::before {
+    content: "";
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+}
+.carousel-arrow-left::before  { border-right: 22px solid var(--crimson); margin-right: 4px; }
+.carousel-arrow-right::before { border-left: 22px solid var(--crimson); margin-left: 4px; }
+.carousel-arrow.is-disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+/* ── Lightbox — click a carousel card to see it full size in place ── */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,10,10,0.92);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition);
+    padding: 3rem 1.5rem;
+}
+.lightbox.open {
+    opacity: 1;
+    visibility: visible;
+}
+.lightbox-img {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+    border-radius: 6px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+}
+.lightbox-close {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 1.75rem;
+    line-height: 1;
+    border: 1px solid rgba(255,255,255,0.25);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition);
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.2); }
+
+@media (max-width: 900px) {
+    .carousel-wrap { padding: 0 3rem; }
+    .carousel-item { width: min(240px, 68vw); }
+    .carousel-arrow { width: 42px; height: 130px; border-radius: 21px; }
+    .carousel-arrow::before { border-top-width: 13px; border-bottom-width: 13px; }
+    .carousel-arrow-left::before  { border-right-width: 20px; }
+    .carousel-arrow-right::before { border-left-width: 20px; }
+}
+@media (max-width: 600px) {
+    .carousel-header { padding: 0 1.25rem; }
+    .carousel-wrap { padding: 0 2.4rem; }
+    .carousel-item { width: 68vw; }
+    .carousel-arrow { width: 36px; height: 96px; border-radius: 18px; }
+    .carousel-arrow::before { border-top-width: 10px; border-bottom-width: 10px; }
+    .carousel-arrow-left::before  { border-right-width: 15px; }
+    .carousel-arrow-right::before { border-left-width: 15px; }
+    .lightbox-close { top: 0.75rem; right: 0.75rem; }
 }
 
 /* ═══════════════════════════════════════════
