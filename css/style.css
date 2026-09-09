@@ -1488,6 +1488,23 @@ a   { text-decoration: none; color: inherit; }
 @media (max-width: 900px) {
     .slab-first-inner { padding: 1.75rem 1.5rem; }
     .slab-inner { grid-template-columns: 1fr; }
+    /* .slab-inner-full (all 35 chapter slabs) was never being stacked on
+       mobile at all -- only the plain .slab-inner rule above existed, so
+       every chapter stayed locked in its desktop 42fr/58fr two-column
+       split on phone-width screens. Matching selector specificity
+       (.slab-inner-full.slab-image-left/-right, two classes each) is
+       required here, or these lose to the higher-specificity desktop
+       rules regardless of media query. */
+    .slab-inner-full.slab-image-left,
+    .slab-inner-full.slab-image-right { grid-template-columns: 1fr; }
+    /* Once stacked to one column, the image should always sit above the
+       text, regardless of which side it was on at desktop width -- the
+       alternating left/right `order` trick only makes sense side by
+       side, and left it unreset here, .slab-image-right layouts (about
+       half of everything, including the founder section) stacked text
+       ABOVE the image, backwards. */
+    .slab-image-right .slab-text  { order: 0; }
+    .slab-image-right .slab-image { order: -1; }
     .desktop-nav     { display: none; }
     .topics-dropdown { display: none; }
     .hamburger       { display: flex; }
