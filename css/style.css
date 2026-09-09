@@ -662,8 +662,128 @@ a   { text-decoration: none; color: inherit; }
     width: 100%;
     max-width: 270px;
     margin: 0 auto;
+    /* Reset the generic .slab-image "chapter diagram" box chrome this div
+       inherits (min-height:380px, box-shadow, border-radius, overflow) --
+       .video-card supplies its own frame now, so that leftover chrome was
+       rendering a second, taller, half-empty box around the smaller
+       framed card. */
+    min-height: 0;
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
 }
 .founder-photo img { height: auto; object-position: center 8%; }
+
+/* ── Founder intro video -- thumbnail card + fullscreen modal.
+   height:auto + aspect-ratio below is just the pre-JS/fallback state
+   (derives height from the 270px-capped width, same as the old photo).
+   js/main.js measures the credentials column's real rendered height on
+   load/resize and sets an explicit inline px height on .video-card --
+   aspect-ratio then cleanly derives the WIDTH from that real height
+   (a well-defined case, unlike trying to get grid/flex stretch to feed
+   into aspect-ratio sizing, which turned out to be an unpredictable
+   circular dependency). A picture-frame treatment (white mat + thin
+   crimson border) wraps it, with a play-button overlay marking it as a
+   video. ── */
+.video-card {
+    display: block;
+    position: relative;
+    height: auto;
+    width: auto;
+    max-width: 100%;
+    aspect-ratio: 696 / 953;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid rgba(165,28,48,0.3);
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+.video-card:hover, .video-card:focus-visible {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.22);
+}
+.video-card img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+    object-position: center 8%;
+}
+.video-play { position: absolute; inset: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+.video-play::before {
+    content: "";
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.video-play::after {
+    content: "";
+    position: absolute;
+    border-style: solid; border-width: 8px 0 8px 13px;
+    border-color: transparent transparent transparent var(--crimson);
+    transform: translateX(2px);
+}
+
+.video-modal {
+    position: fixed; inset: 0; z-index: 2000;
+    background: #000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+}
+.video-modal[hidden] { display: none; }
+.video-modal-frame {
+    position: relative;
+    /* full-bleed, capped by the 9:16 ratio on whichever axis runs out
+       first -- any leftover space letterboxes in the same solid black as
+       the modal background, so it reads as fullscreen, not a floating
+       panel. */
+    width: min(100vw, calc(100dvh * 9 / 16));
+    height: min(100dvh, calc(100vw * 16 / 9));
+    background: #000;
+    overflow: hidden;
+}
+.video-modal-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-modal-placeholder {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-family: var(--font-serif); font-size: 1.05rem;
+    text-align: center; padding: 1.5rem;
+}
+.video-modal-spinner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.video-modal-spinner::after {
+    content: "";
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.25);
+    border-top-color: #fff;
+    animation: video-modal-spin 0.8s linear infinite;
+}
+@keyframes video-modal-spin { to { transform: rotate(360deg); } }
+.video-modal-error {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1rem; padding: 2rem 1.5rem; text-align: center;
+    color: #fff;
+}
+.video-modal-error p { font-family: var(--font-serif); font-size: 1.05rem; margin: 0; opacity: 0.9; }
+.video-modal-error a {
+    display: inline-block;
+    padding: 0.7em 1.5em; font-size: 0.95rem;
+    background: var(--crimson); color: #fff; border-radius: 4px;
+}
+.video-modal-error a:hover { background: var(--crimson-dk); }
+.video-modal-close {
+    position: absolute; top: 1.25rem; right: 1.25rem; z-index: 2001;
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(255,255,255,0.12); color: #fff;
+    border: none; font-size: 1.6rem; line-height: 1; cursor: pointer;
+    transition: background var(--transition);
+}
+.video-modal-close:hover { background: rgba(255,255,255,0.22); }
 
 .btn-linkedin {
     display: inline-block;

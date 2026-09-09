@@ -405,3 +405,175 @@ backToTop?.addEventListener('click', () => {
     // note on why scroll-behavior: smooth is not used anywhere on this page.
     window.scrollTo({ top: 0 });
 });
+
+// ── Match the founder video-card's height to the credentials column ──
+// CSS alone (grid stretch feeding an aspect-ratio calc) turned out to be
+// an unpredictable circular dependency -- this measures the real
+// rendered height directly and sets it as an explicit inline px value,
+// which aspect-ratio can then cleanly derive the card's width from (a
+// well-defined case). Below the 900px breakpoint where .slab-inner
+// stacks to one column (see css/style.css), the columns aren't
+// side-by-side any more, so the inline height is cleared and the card
+// falls back to its own CSS (width-capped, height from aspect-ratio).
+(function () {
+    const card = document.getElementById('founderVideoCard');
+    const textCol = document.querySelector('#founder .slab-text');
+    if (!card || !textCol) return;
+
+    function syncHeight() {
+        if (window.innerWidth <= 900) {
+            card.style.height = '';
+            return;
+        }
+        card.style.height = textCol.offsetHeight + 'px';
+    }
+
+    syncHeight();
+    window.addEventListener('resize', syncHeight);
+    window.addEventListener('load', syncHeight); // re-check once webfonts/images settle text height
+})();
+
+// ── Founder intro video modal ──
+// Single-video fullscreen popup, ported from Bengali_Career_Strategy's
+// bookshelf video modal (same YouTube IFrame API approach -- not a raw
+// iframe -- so a blocked/removed/private video shows a clear message
+// instead of a silent blank box). No grid here, just one trigger button.
+(function () {
+    const FOUNDER_VIDEO_ID = 'gwIuTEmreyk'; // https://youtube.com/shorts/gwIuTEmreyk
+
+    const trigger = document.getElementById('founderVideoCard');
+    const modal = document.getElementById('videoModal');
+    const modalFrame = document.getElementById('videoModalFrame');
+    const modalClose = document.getElementById('videoModalClose');
+    if (!trigger || !modal || !modalFrame || !modalClose) return;
+
+    let ytApiPromise = null;
+    let currentPlayer = null;
+    let currentReadyTimeout = null;
+    let scrollLockY = 0;
+    let openSessionId = 0;
+    let lastFocusedElement = null;
+
+    function loadYouTubeApi() {
+        if (ytApiPromise) return ytApiPromise;
+        ytApiPromise = new Promise((resolve, reject) => {
+            const failTimer = setTimeout(() => reject(new Error('yt-api-timeout')), 6000);
+            window.onYouTubeIframeAPIReady = () => { clearTimeout(failTimer); resolve(window.YT); };
+            const script = document.createElement('script');
+            script.src = 'https://www.youtube.com/iframe_api';
+            script.onerror = () => { clearTimeout(failTimer); reject(new Error('yt-api-script-error')); };
+            document.head.appendChild(script);
+        }).catch(err => {
+            ytApiPromise = null; // don't cache a failed load -- let the next click retry from scratch
+            throw err;
+        });
+        return ytApiPromise;
+    }
+
+    function errorMessageFor(code) {
+        switch (code) {
+            case 2:   return "This video link isn't valid.";
+            case 5:   return "This video can't be played in this browser right now.";
+            case 100: return 'This video was removed or made private.';
+            case 101:
+            case 150: return "The video owner has disabled playback on other websites.";
+            default:  return "This video can't be played right now.";
+        }
+    }
+
+    function showModalError(ytId, message) {
+        if (currentReadyTimeout) { clearTimeout(currentReadyTimeout); currentReadyTimeout = null; }
+        currentPlayer = null;
+        modalFrame.innerHTML = `
+            <div class="video-modal-error">
+                <p>${message}</p>
+                <a href="https://www.youtube.com/watch?v=${ytId}" target="_blank" rel="noopener">Watch on YouTube instead</a>
+            </div>`;
+    }
+
+    function lockScroll() {
+        scrollLockY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollLockY}px`;
+        document.body.style.width = '100%';
+    }
+    function unlockScroll() {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollLockY);
+    }
+
+    function openVideoModal(ytId, triggerEl) {
+        if (!modal.hidden) return;
+        const mySession = ++openSessionId;
+
+        lastFocusedElement = triggerEl || document.activeElement;
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        lockScroll();
+        modalClose.focus();
+
+        if (!ytId || ytId === 'REPLACE_WITH_YOUTUBE_ID') {
+            modalFrame.innerHTML = `<div class="video-modal-placeholder">Video coming soon.</div>`;
+            return;
+        }
+
+        modalFrame.innerHTML = `<div class="video-modal-spinner"></div><div id="founder-yt-player-target"></div>`;
+
+        currentReadyTimeout = setTimeout(() => {
+            if (mySession !== openSessionId) return;
+            showModalError(ytId, "This is taking longer than usual to load — it may be a slow connection, an ad blocker, or a network restriction.");
+        }, 9000);
+
+        loadYouTubeApi().then(YT => {
+            if (mySession !== openSessionId) return;
+            try {
+                currentPlayer = new YT.Player('founder-yt-player-target', {
+                    videoId: ytId,
+                    playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
+                    events: {
+                        onReady: () => {
+                            if (mySession !== openSessionId) return;
+                            if (currentReadyTimeout) { clearTimeout(currentReadyTimeout); currentReadyTimeout = null; }
+                            const spinner = modalFrame.querySelector('.video-modal-spinner');
+                            if (spinner) spinner.remove();
+                        },
+                        onError: e => {
+                            if (mySession !== openSessionId) return;
+                            showModalError(ytId, errorMessageFor(e.data));
+                        }
+                    }
+                });
+            } catch (err) {
+                if (mySession !== openSessionId) return;
+                showModalError(ytId, "This video can't be played right now.");
+            }
+        }, () => {
+            if (mySession !== openSessionId) return;
+            showModalError(ytId, "This is taking longer than usual to load — it may be a slow connection, an ad blocker, or a network restriction.");
+        });
+    }
+
+    function closeVideoModal() {
+        openSessionId++;
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        unlockScroll();
+        if (currentReadyTimeout) { clearTimeout(currentReadyTimeout); currentReadyTimeout = null; }
+        if (currentPlayer && typeof currentPlayer.destroy === 'function') {
+            currentPlayer.destroy();
+        }
+        currentPlayer = null;
+        modalFrame.innerHTML = '';
+        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+            lastFocusedElement.focus();
+        }
+        lastFocusedElement = null;
+    }
+
+    trigger.addEventListener('click', () => openVideoModal(FOUNDER_VIDEO_ID, trigger));
+    modalClose.addEventListener('click', closeVideoModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeVideoModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeVideoModal(); });
+})();

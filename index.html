@@ -256,10 +256,12 @@
                     <a href="https://www.linkedin.com/in/samudra-dasgupta/" target="_blank" rel="noopener" class="btn-linkedin">Connect with me</a>
                 </div>
                 <div class="slab-image founder-photo">
-                    <img src="img/founder/sdg-jun19-2026-1.png"
-                         alt="Dr. Samudra Dasgupta"
-                         width="696" height="953"
-                         loading="lazy">
+                    <button type="button" class="video-card" id="founderVideoCard" aria-label="Play video: meet Dr. Samudra Dasgupta">
+                        <img src="img/founder/sdg-jun19-2026-1.png"
+                             alt="Dr. Samudra Dasgupta"
+                             loading="lazy">
+                        <span class="video-play" aria-hidden="true"></span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -845,6 +847,17 @@
     <div class="lightbox" id="imageLightbox" role="dialog" aria-modal="true" aria-hidden="true">
         <button class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
         <img class="lightbox-img" id="lightboxImg" src="" alt="">
+    </div>
+
+    <!-- Founder intro video -- fullscreen modal, YouTube IFrame API (not a
+         raw iframe) so a blocked/removed/private video shows a clear
+         message instead of a silent blank box. Same pattern as
+         Bengali_Career_Strategy's video-modal, ported and recolored to
+         this site's crimson/charcoal palette. No feed/autoplay-next -- a
+         single video, nothing else. -->
+    <div class="video-modal" id="videoModal" role="dialog" aria-modal="true" aria-hidden="true" hidden>
+        <button type="button" class="video-modal-close" id="videoModalClose" aria-label="Close video">&times;</button>
+        <div class="video-modal-frame" id="videoModalFrame"></div>
     </div>
 
     <!-- Google Analytics -- deferred until after the load event. gtag.js is
