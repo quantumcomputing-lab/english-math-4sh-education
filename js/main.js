@@ -135,14 +135,150 @@ const sectionObserver = new IntersectionObserver((entries) => {
 
 sections.forEach(s => sectionObserver.observe(s));
 
-// ── Click-to-WhatsApp CTA click tracking ──
-document.querySelectorAll('.btn-whatsapp').forEach(btn => {
+// ── Schedule-consultation CTA click tracking ──
+document.querySelectorAll('.btn-schedule').forEach(btn => {
     btn.addEventListener('click', () => {
         if (typeof gtag === 'function') {
-            gtag('event', 'whatsapp_click', { event_category: 'contact', event_label: btn.closest('section')?.id || 'contact' });
+            gtag('event', 'consultation_modal_open', { event_category: 'contact', event_label: btn.closest('section')?.id || 'contact' });
         }
     });
 });
+
+// ── Consultation request modal + form ──
+// Submits to a real Google Form in the background (fetch, mode:'no-cors')
+// so responses land in the linked Sheet without the page ever navigating
+// away. no-cors means the response body/status can't be read -- Google
+// doesn't allow this cross-origin request to be inspected -- so success
+// here means "the request completed without a network error," not a
+// confirmed 200 from Google. That's the accepted tradeoff for posting to
+// Forms directly instead of running a real backend.
+(function () {
+    const modal      = document.getElementById('consultModal');
+    const openBtn    = document.getElementById('openConsultModal');
+    const closeBtn   = document.getElementById('consultModalClose');
+    const form       = document.getElementById('consultForm');
+    if (!modal || !openBtn || !form) return;
+
+    const FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSe1qCYFYkvaPUzziFp0HYeKwwBHsurVCFOIcVLiRVC15wdj-A/formResponse';
+    const ENTRY = {
+        name: 'entry.2005620554',
+        email: 'entry.1045781291',
+        phone: 'entry.1166974658',
+        subject: 'entry.839337160',
+    };
+
+    const nameInput    = document.getElementById('cf-name');
+    const emailInput   = document.getElementById('cf-email');
+    const countrySel   = document.getElementById('cf-country');
+    const phoneInput   = document.getElementById('cf-phone');
+    const subjectInput = document.getElementById('cf-subject');
+    const hpInput      = document.getElementById('cf-hp');
+    const submitBtn    = document.getElementById('cf-submit');
+    const statusEl     = document.getElementById('cf-status');
+
+    const errors = {
+        name: document.getElementById('cf-name-error'),
+        email: document.getElementById('cf-email-error'),
+        phone: document.getElementById('cf-phone-error'),
+        subject: document.getElementById('cf-subject-error'),
+    };
+
+    let lastFocused = null;
+
+    function openModal() {
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        lastFocused = document.activeElement;
+        nameInput?.focus();
+    }
+    function closeModal() {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        lastFocused?.focus();
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+    });
+
+    function setError(field, message) {
+        if (errors[field]) errors[field].textContent = message || '';
+    }
+
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const DIGITS_RE = /^\d{6,14}$/;
+
+    function validate() {
+        let ok = true;
+        Object.keys(errors).forEach(k => setError(k, ''));
+
+        if (!nameInput.value.trim()) {
+            setError('name', 'Please enter your name.');
+            ok = false;
+        }
+        if (!EMAIL_RE.test(emailInput.value.trim())) {
+            setError('email', 'Enter a valid email address.');
+            ok = false;
+        }
+        const phoneDigits = phoneInput.value.trim();
+        if (!DIGITS_RE.test(phoneDigits)) {
+            setError('phone', 'Digits only, 6-14 numbers, no spaces or symbols.');
+            ok = false;
+        }
+        if (!subjectInput.value.trim()) {
+            setError('subject', 'Let me know what you need help with.');
+            ok = false;
+        }
+        return ok;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Honeypot tripped -- a bot filled a field a real visitor never
+        // sees. Pretend success without actually submitting anything.
+        if (hpInput.value.trim() !== '') {
+            showSuccess();
+            return;
+        }
+
+        if (!validate()) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+        statusEl.textContent = '';
+        statusEl.style.color = '';
+
+        const params = new URLSearchParams();
+        params.append(ENTRY.name, nameInput.value.trim());
+        params.append(ENTRY.email, emailInput.value.trim());
+        params.append(ENTRY.phone, `${countrySel.value} ${phoneInput.value.trim()}`);
+        params.append(ENTRY.subject, subjectInput.value.trim());
+
+        try {
+            await fetch(FORM_ACTION, { method: 'POST', mode: 'no-cors', body: params });
+            showSuccess();
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Interest';
+            statusEl.textContent = 'Something went wrong sending this. Please email support@4sh.education directly.';
+            statusEl.style.color = '#ff8a8a';
+        }
+    });
+
+    function showSuccess() {
+        const card = modal.querySelector('.modal-card');
+        card.innerHTML = '<button type="button" class="modal-close" id="consultModalCloseSuccess" aria-label="Close">&times;</button>' +
+            '<h2>Thank you!</h2>' +
+            '<p class="whatsapp-lead">I&rsquo;ve received your request and will get back to you within 24 hours to schedule a time.</p>';
+        card.querySelector('#consultModalCloseSuccess').addEventListener('click', closeModal);
+    }
+})();
 
 // ── Book preview carousel (ported from Foundation_Site's infographic
 //    carousel: bookend arrow buttons + click-and-drag scrolling) ──

@@ -692,15 +692,76 @@
         <div class="contact-inner contact-whatsapp">
             <h2 class="fade-in">Accelerate your career. Get the world-class guidance you deserve. Start today.</h2>
             <p class="whatsapp-lead fade-in">Contact Dr. Samudra Dasgupta directly</p>
-            <a class="btn-whatsapp fade-in"
-               href="https://wa.me/918282849888?text=Dear%20Sir%2C%20I%20am%20interested%20in%20Mathematics%20coaching.%20My%20name%20is%3A%20"
-               target="_blank" rel="noopener">
-                <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.71.44 3.37 1.29 4.84L2 22l5.36-1.4a9.9 9.9 0 0 0 4.68 1.19h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 1.67c2.24 0 4.34.87 5.92 2.45a8.23 8.23 0 0 1 2.42 5.85c0 4.56-3.71 8.27-8.28 8.27a8.2 8.2 0 0 1-4.2-1.15l-.3-.18-3.18.83.85-3.1-.2-.32a8.18 8.18 0 0 1-1.26-4.38c0-4.56 3.71-8.27 8.23-8.27zm-4.42 4.72c-.15 0-.4.06-.6.28-.21.22-.8.78-.8 1.9s.82 2.2.94 2.36c.12.15 1.6 2.5 3.94 3.42 1.95.77 2.35.62 2.77.58.43-.04 1.38-.56 1.57-1.1.2-.54.2-1 .14-1.1-.06-.1-.22-.16-.46-.28-.24-.12-1.38-.68-1.6-.76-.21-.08-.37-.12-.53.12-.15.24-.6.76-.74.92-.14.16-.27.18-.5.06-.24-.12-1-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.02-.37.1-.5.11-.1.24-.27.37-.4.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.53-1.32-.74-1.8-.19-.46-.39-.4-.53-.4z"/></svg>
-                <span>Chat on WhatsApp</span>
-            </a>
+            <button type="button" class="btn-schedule fade-in" id="openConsultModal">
+                <svg class="schedule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5.5" width="13" height="13" rx="2"/><path d="M15.5 10.5 21 7v10l-5.5-3.5"/></svg>
+                <span>Schedule a video consultation today.</span>
+            </button>
             <p class="form-note">State Boards &middot; CBSE &middot; ICSE &middot; Engineering &middot; Medical &middot; STEM PhD</p>
         </div>
     </section>
+
+    <!-- Consultation request modal -- opens in place, no new tab, no
+         window.open() popup. Submits to a real Google Form in the
+         background (hidden fetch, no-cors) so responses land in the
+         linked Sheet; the page never navigates away. -->
+    <div class="modal" id="consultModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="consultModalTitle">
+        <div class="modal-card">
+            <button type="button" class="modal-close" id="consultModalClose" aria-label="Close">&times;</button>
+            <h2 id="consultModalTitle">Schedule a Video Consultation</h2>
+            <p class="whatsapp-lead">Tell me a bit about what you need &mdash; I&rsquo;ll follow up to set up a time.</p>
+            <form class="contact-form" id="consultForm" novalidate>
+                <label for="cf-name">Name
+                    <input type="text" id="cf-name" name="name" autocomplete="name" required>
+                    <span class="field-error" id="cf-name-error"></span>
+                </label>
+                <label for="cf-email">Email
+                    <input type="email" id="cf-email" name="email" autocomplete="email" required>
+                    <span class="field-error" id="cf-email-error"></span>
+                </label>
+                <label for="cf-phone">Phone
+                    <span class="phone-row">
+                        <select id="cf-country" aria-label="Country code">
+                            <option value="+91" selected>+91 India</option>
+                            <option value="+1">+1 US/Canada</option>
+                            <option value="+44">+44 UK</option>
+                            <option value="+61">+61 Australia</option>
+                            <option value="+64">+64 New Zealand</option>
+                            <option value="+65">+65 Singapore</option>
+                            <option value="+971">+971 UAE</option>
+                            <option value="+966">+966 Saudi Arabia</option>
+                            <option value="+974">+974 Qatar</option>
+                            <option value="+973">+973 Bahrain</option>
+                            <option value="+968">+968 Oman</option>
+                            <option value="+92">+92 Pakistan</option>
+                            <option value="+880">+880 Bangladesh</option>
+                            <option value="+94">+94 Sri Lanka</option>
+                            <option value="+977">+977 Nepal</option>
+                            <option value="+49">+49 Germany</option>
+                            <option value="+33">+33 France</option>
+                            <option value="+81">+81 Japan</option>
+                            <option value="+86">+86 China</option>
+                            <option value="+27">+27 South Africa</option>
+                        </select>
+                        <input type="tel" id="cf-phone" name="phone" inputmode="numeric" autocomplete="tel-national" required>
+                    </span>
+                    <span class="field-error" id="cf-phone-error"></span>
+                </label>
+                <label for="cf-subject">Subject / Help Required
+                    <textarea id="cf-subject" name="subject" required></textarea>
+                    <span class="field-error" id="cf-subject-error"></span>
+                </label>
+                <!-- Honeypot -- left visually off-canvas, never shown to a real
+                     visitor; bots that auto-fill every field trip this and get
+                     silently dropped instead of submitted. -->
+                <label class="hp-field" aria-hidden="true">
+                    Leave this field blank
+                    <input type="text" id="cf-hp" name="website" tabindex="-1" autocomplete="off">
+                </label>
+                <button type="submit" class="btn-submit" id="cf-submit">Submit Interest</button>
+                <p class="form-note" id="cf-status" role="status" aria-live="polite"></p>
+            </form>
+        </div>
+    </div>
 
     <!-- ═══════════════════════════════════════
          BOOK PREVIEW CAROUSEL
