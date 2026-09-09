@@ -102,7 +102,11 @@ const mathObserver = new IntersectionObserver((entries) => {
     if (entry.isIntersecting) hydrateMath(entry.target);
   });
 }, { rootMargin: '600px 0px' });
-document.querySelectorAll('.topic-slab').forEach(el => mathObserver.observe(el));
+// .slab-full covers chapters migrated to the newer full-bleed layout
+// (still carries its own <template class="katex-tpl">, just no longer
+// wrapped in .topic-slab) -- hydrateMath() no-ops harmlessly on any
+// section here that has no template, so this is safe to over-select.
+document.querySelectorAll('.topic-slab, .slab-full').forEach(el => mathObserver.observe(el));
 
 // Every in-page anchor link (nav, dropdown, footer sitemap) must land on a
 // destination whose math is already hydrated -- otherwise the section's

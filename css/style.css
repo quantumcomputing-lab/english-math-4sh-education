@@ -16,6 +16,7 @@
     --body-text:   #2D2D2D;
     --muted:       #666666;
     --bg:          #FFFFFF;
+    --bg-alt:      #F9F7F4;
     --bg-dark:     #1A1A1A;
     --header-h:    72px;
     --max-w:       1200px;
@@ -345,6 +346,41 @@ a   { text-decoration: none; color: inherit; }
 }
 
 .slab-image-left .slab-image { order: -1; }
+.slab-image-right .slab-text { order: -1; }
+/* Text gets more width than the image (not a strict 50/50 split) --
+   narrower image column means a shorter definite height (see below) still
+   crops a sensible amount of the portrait source, and the extra text
+   width means fewer wrapped lines for the same word count. Two rules
+   because `order` only changes visual position, not which grid track
+   (defined by column position, not content) gets which width -- text
+   must land in the wider track regardless of which side it's on. */
+.slab-inner-full.slab-image-left { grid-template-columns: 42fr 58fr; }
+.slab-inner-full.slab-image-right { grid-template-columns: 58fr 42fr; }
+
+/* Full-bleed variant (ported from english_shakespeare_site) — image and
+   text run edge to edge across the full browser width on desktop, instead
+   of .slab-inner's centered 1200px column. Used for chapters migrated to
+   the newer per-chapter layout; chapters still on .topic-slab are
+   untouched by this. */
+.slab.slab-full { padding: 0; }
+.slab-inner-full {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    align-items: stretch;
+    /* NOT min-height:100vh here -- that guarantees the row is AT LEAST one
+       screen tall, which is the opposite of tight when content is short:
+       the image (align-self:stretch) fills that forced height, but the
+       text column only wraps its own content and then centers inside the
+       leftover space, showing up as equal dead space above and below the
+       text. Letting height come from content keeps chapters short-content
+       chapters short, while the image's own min-height below still gives
+       every row a sensible floor. */
+}
+.slab-inner-full .slab-text {
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+}
 
 .slab .slab-image {
     align-self: stretch;
@@ -360,158 +396,130 @@ a   { text-decoration: none; color: inherit; }
     object-fit: cover;
     display: block;
 }
+/* Must come after the base .slab .slab-image rule above -- equal
+   specificity (two classes each), so source order decides the winner,
+   and this needs to win in order to actually zero out the radius/shadow
+   for full-bleed chapters. */
+.slab-inner-full .slab-image {
+    border-radius: 0;
+    box-shadow: none;
+}
+/* Per-image crop bias for full-bleed chapter illustrations, targeted by
+   filename (not position) so it survives reordering — see
+   english_shakespeare_site's css for the same pattern. This one keeps the
+   blackboard/teacher in frame rather than the seated students at the
+   bottom, which a plain center crop loses on tall narrow columns. */
+.slab-image img[src$="01-sets-and-relations.webp"] { object-position: center 35%; }
+.slab-image img[src$="02-complex-numbers.webp"] { object-position: center 25%; }
+/* Chapters 3-35 weren't individually eyeballed for crop bias like the two
+   above -- both sampled illustrations put their main subject (signage/
+   text) in the upper half, so this is a reasonable untuned default rather
+   than a plain center crop. Lower specificity than the filename rules
+   above (attribute selector beats plain descendant), so those still win
+   where they're set. */
+.slab-inner-full .slab-image img { object-position: center 30%; }
+
+/* Per-chapter sizing (not a shared rule). Root cause of both the
+   "trailing space" and "truncated image" complaints turned out to be the
+   same mechanism: .slab-image img has height:100%, but as long as
+   .slab-image itself only has min-height (not a definite height),
+   height:100% can't resolve against it -- percentage heights need a
+   DEFINITE parent height, and min-height doesn't count as one. The
+   fallback is the image's own intrinsic aspect ratio (2:3 for these
+   source files) at its rendered width, which at a wide desktop column is
+   far taller than these short chapters' actual text (~1080px at 720px
+   wide vs text needing more like 850-1000px) -- and since that intrinsic
+   size feeds the grid row's auto-height calculation, no min-height value
+   could ever fix it; the row kept getting pulled up by the image
+   regardless. Fix: give .slab-image a real, definite `height` (not
+   min-height) instead, sized per chapter via tools/layout_calc.py against
+   the actual text content and the 58/42 column split above -- this is
+   what actually breaks the percentage-resolution fallback. Text stays at
+   align-self:start (its own content height, never stretched) so it never
+   contributes trailing space of its own either. */
+#topic-1 .slab-text,
+#topic-2 .slab-text,
+#topic-3 .slab-text,
+#topic-4 .slab-text,
+#topic-5 .slab-text,
+#topic-7 .slab-text,
+#topic-8 .slab-text,
+#topic-9 .slab-text,
+#topic-10 .slab-text,
+#topic-11 .slab-text,
+#topic-12 .slab-text,
+#topic-13 .slab-text,
+#topic-14 .slab-text,
+#topic-15 .slab-text,
+#topic-16 .slab-text,
+#topic-17 .slab-text,
+#topic-18 .slab-text,
+#topic-19 .slab-text,
+#topic-20 .slab-text,
+#topic-21 .slab-text,
+#topic-22 .slab-text,
+#topic-23 .slab-text,
+#topic-24 .slab-text,
+#topic-25 .slab-text,
+#topic-26 .slab-text,
+#topic-27 .slab-text,
+#topic-28 .slab-text,
+#topic-29 .slab-text,
+#topic-30 .slab-text,
+#topic-31 .slab-text,
+#topic-32 .slab-text,
+#topic-33 .slab-text,
+#topic-34 .slab-text,
+#topic-35 .slab-text {
+    align-self: start;
+}
+#topic-1 .slab-image { height: 860px; }
+#topic-2 .slab-image { height: 790px; }
+#topic-3 .slab-image { height: 890px; }
+#topic-4 .slab-image { height: 860px; }
+#topic-5 .slab-image { height: 800px; }
+#topic-7 .slab-image { height: 800px; }
+/* Chapters 8-35 rewritten (Sept 2026) to the shorter "where does this
+   actually matter" pull-quote format -- every one lost a full paragraph
+   versus its original content, so all get the same trailing-space fix as
+   chapters 1-5 and 7 above. Heights from tools/layout_calc.py's estimate
+   at this same 720px reference column, scaled by ~0.86 to match the
+   overestimate margin measured against chapters 1-5's already-tuned
+   values (no browser available to verify pixel-exact, per the script's
+   own docstring). */
+#topic-8 .slab-image { height: 910px; }
+#topic-9 .slab-image { height: 780px; }
+#topic-10 .slab-image { height: 780px; }
+#topic-11 .slab-image { height: 720px; }
+#topic-12 .slab-image { height: 780px; }
+#topic-13 .slab-image { height: 780px; }
+#topic-14 .slab-image { height: 810px; }
+#topic-15 .slab-image { height: 750px; }
+#topic-16 .slab-image { height: 750px; }
+#topic-17 .slab-image { height: 780px; }
+#topic-18 .slab-image { height: 750px; }
+#topic-19 .slab-image { height: 750px; }
+#topic-20 .slab-image { height: 840px; }
+#topic-21 .slab-image { height: 740px; }
+#topic-22 .slab-image { height: 810px; }
+#topic-23 .slab-image { height: 710px; }
+#topic-24 .slab-image { height: 780px; }
+#topic-25 .slab-image { height: 750px; }
+#topic-26 .slab-image { height: 780px; }
+#topic-27 .slab-image { height: 780px; }
+#topic-28 .slab-image { height: 780px; }
+#topic-29 .slab-image { height: 750px; }
+#topic-30 .slab-image { height: 780px; }
+#topic-31 .slab-image { height: 750px; }
+#topic-32 .slab-image { height: 780px; }
+#topic-33 .slab-image { height: 750px; }
+#topic-34 .slab-image { height: 780px; }
+#topic-35 .slab-image { height: 780px; }
 
 /* ═══════════════════════════════════════════
-   TOPIC SLAB (physics content) — full-width, single column.
-   Title + opening paragraph, then a full-width diagram, then the
-   rest of the prose. Diagrams are content, not decoration — they
-   read better at full slab width than squeezed into a half column.
+   End-of-chapter CTA — same weight as the contact form's "Count me in"
+   button, but dark red to read as a distinct, secondary action.
 ═══════════════════════════════════════════ */
-.topic-slab {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 0 2rem;
-}
-.topic-slab .topic-text {
-    max-width: 760px;
-    margin: 0 auto;
-}
-.topic-slab .topic-text p {
-    font-family: var(--font-body);
-    font-size: 1.05rem;
-    line-height: 1.85;
-    color: var(--muted);
-    margin-bottom: 1rem;
-}
-.topic-slab .topic-text p:last-child { margin-bottom: 0; }
-.topic-slab .topic-text p.fig-caption {
-    font-size: 0.92rem;
-    color: var(--crimson);
-    opacity: 0.85;
-}
-
-/* Between-topic milestone — a proper pause between one topic and the
-   next. Four fading bars stacked tightly read as one thicker, simpler
-   divider (a soft tapered edge, without a single flat rectangle),
-   with generous breathing space above and below. Only appears between
-   two topics; a block divider already separates a block's opening topic. */
-.topic-milestone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    width: 100%;
-    max-width: 760px; /* matches the topic-text column width */
-    margin: 4.5rem auto;
-}
-.topic-milestone .milestone-bar {
-    width: 100%;
-    height: 4px;
-    border-radius: 3px;
-    background: linear-gradient(to right, transparent, var(--crimson), transparent);
-}
-
-.topic-diagram {
-    width: 99%;
-    max-width: 752px; /* 99% of the 760px text column */
-    margin: 2.5rem auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.topic-diagram img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    border-radius: 6px;
-}
-
-/* ═══════════════════════════════════════════
-   TOPIC BANNER — full-bleed title card reusing the hero image as a
-   consistent backdrop across every chapter (the same foreboding, awe-
-   inspiring mood each time), with the chapter title overlaid. The
-   chapter's own illustration is separate — see .topic-diagram below,
-   shown in full, uncropped.
-═══════════════════════════════════════════ */
-.topic-banner {
-    position: relative;
-    margin-bottom: 3rem;
-    height: min(52vh, 460px);
-    min-height: 320px;
-    overflow: hidden;
-}
-/* Full-bleed breakout, split by viewport instead of one 100vw rule for all
-   sizes. 100vw is a well-documented source of real-device-only bugs on
-   Android Chrome (miscalculates against the dynamic toolbar/scrollbar,
-   unlike desktop DevTools' mobile emulation, which never reproduces it) --
-   confirmed root cause of the site's fixed header rendering at roughly
-   double the real viewport width on an actual Android phone, present on
-   all 35 chapters via this one rule. Below 900px, .topic-slab's padding is
-   a fixed 2rem at every width, so a plain negative margin achieves the
-   identical full-bleed look with no viewport-unit math at all. Above
-   900px, .topic-slab's centering gap varies with viewport width, so the
-   vw-based technique still does the real work there -- but only on
-   desktop, where this bug doesn't occur. */
-@media (max-width: 900px) {
-    .topic-banner {
-        margin-left: -2rem;
-        margin-right: -2rem;
-    }
-}
-@media (min-width: 901px) {
-    .topic-banner {
-        width: 100vw;
-        /* margin-based full-bleed breakout (not transform) — .fade-in also
-           animates via `transform`, and only one transform value can win
-           when two rules both set it, so a transform-based centering trick
-           here would silently fight the reveal animation on the same
-           element. */
-        margin-left: calc(50% - 50vw);
-        margin-right: calc(50% - 50vw);
-    }
-}
-.topic-banner img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    display: block;
-}
-.topic-banner::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-}
-.topic-banner-caption {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 2.5rem 2rem;
-}
-.topic-banner-caption .section-label {
-    color: #fff;
-    opacity: 0.8;
-    margin-bottom: 0.75rem;
-}
-.topic-banner-caption h2 {
-    font-family: var(--font-serif);
-    font-size: clamp(2rem, 5vw, 3.4rem);
-    font-weight: 700;
-    line-height: 1.15;
-    color: #fff;
-    text-shadow: 0 2px 24px rgba(0,0,0,0.55);
-    max-width: 900px;
-    margin: 0;
-}
-
-/* End-of-chapter CTA — same weight as the contact form's "Count me in"
-   button, but dark red to read as a distinct, secondary action. */
 .btn-chapter-cta {
     display: block;
     width: fit-content;
@@ -527,32 +535,6 @@ a   { text-decoration: none; color: inherit; }
     transition: background var(--transition);
 }
 .btn-chapter-cta:hover { background: var(--dark-red-dk); }
-
-/* Row that holds the chapter CTA alongside an experimental second CTA
-   (currently only on topic-1). Falls back to stacked/centered on mobile. */
-.topic-cta-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin: 2rem auto 0;
-}
-.topic-cta-row .btn-chapter-cta { margin: 0; }
-.btn-quiz-cta {
-    background: var(--crimson);
-    box-shadow: 0 4px 14px rgba(165, 28, 48, 0.35);
-}
-.btn-quiz-cta:hover { background: var(--crimson-dk); }
-
-/* Disabled state — quiz not launched yet. Greyed out, non-interactive. */
-.btn-disabled {
-    background: #9a9a9a;
-    color: #f0f0f0;
-    box-shadow: none;
-    cursor: not-allowed;
-    pointer-events: none;
-}
 
 .slab .slab-text { min-width: 0; }
 .slab .slab-text h2 {
@@ -571,6 +553,51 @@ a   { text-decoration: none; color: inherit; }
     margin-bottom: 1rem;
 }
 .slab .slab-text p:last-child { margin-bottom: 0; }
+/* Was scoped to the old .topic-slab .topic-text ancestor, orphaned by the
+   full-bleed migration -- re-homed to the current .slab-text ancestor so
+   the one inline usage (chapter 9's parabola figure caption) keeps its
+   styling. */
+.slab .slab-text p.fig-caption {
+    font-size: 0.92rem;
+    color: var(--crimson);
+    opacity: 0.85;
+}
+
+/* Must come after the base .slab .slab-text p rule above -- equal
+   specificity (two classes + element each), so source order decides the
+   winner, and this needs to win to actually tighten these full-bleed
+   panels instead of silently losing to the wider base spacing.
+   Chemistry/Shakespeare's text panels run 3-4 long paragraphs, so their
+   1rem paragraph gaps + 1.25rem heading gaps read as generous rhythm, not
+   air. Short-paragraph, multi-subhead chapters (all 35, here) stack many
+   more of those gaps in the same column, which reads as loose rather than
+   tight -- so every full-bleed panel scopes tighter spacing instead of
+   thinning out the content to fit the wider defaults. */
+.slab-inner-full .slab-text p {
+    line-height: 1.7;
+    margin-bottom: 0.7rem;
+}
+.slab-inner-full .slab-text .slab-definition,
+.slab-inner-full .slab-text .slab-subhead {
+    margin-bottom: 0.75rem !important;
+}
+.slab-inner-full .pull-quote {
+    margin: 0.85rem 0;
+    padding: 0.6rem 1rem;
+}
+/* .btn-chapter-cta's own base rule centers it (width:fit-content;
+   margin:2rem auto 0), which suited the old centered 760px column --
+   here it sits in a left-aligned full-bleed text panel instead, so it
+   should hug the same left edge as the paragraphs above it. */
+.slab-inner-full .btn-chapter-cta { margin: 1.25rem 0 0; }
+
+.slab .slab-definition {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+}
 
 .slab .slab-subhead {
     font-family: var(--font-sans);
@@ -640,6 +667,31 @@ a   { text-decoration: none; color: inherit; }
 }
 
 /* ═══════════════════════════════════════════
+   SLAB DARK / ALT — background alternation for full-bleed chapters
+   (ported from English_Chemistry_Site / english_shakespeare_site). Lets
+   consecutive .slab-full chapters sit directly adjacent with zero gap
+   between them -- the background-color change is what marks the boundary
+   between one chapter and the next, instead of a whitespace gap. Reserve
+   .slab-divider (see below) for actual theme/block transitions, e.g.
+   Algebra Foundations -> Trigonometry.
+═══════════════════════════════════════════ */
+.slab-dark {
+    background: var(--bg-dark);
+    color: #fff;
+}
+.slab-dark .slab-text h2 { color: #fff; }
+.slab-dark .slab-text p  { color: rgba(255,255,255,0.82); }
+.slab-dark .slab-definition { color: rgba(255,255,255,0.7); }
+.slab-dark .slab-subhead { color: #fff; }
+.slab-dark .pull-quote   { color: #fff; }
+/* Full crimson (#A51C30) is only ~2.3:1 on the dark slab bg -- below WCAG
+   AA. Lightened crimson for the small label text on dark slabs (~6:1). */
+.slab-dark .section-label,
+.slab-dark .fig-caption { color: #E58A98; }
+
+.slab-alt { background: var(--bg-alt); }
+
+/* ═══════════════════════════════════════════
    SLAB 1 — FIRST (FULL-PAGE HERO SLAB)
 ═══════════════════════════════════════════ */
 .slab-first {
@@ -650,17 +702,28 @@ a   { text-decoration: none; color: inherit; }
     min-height: calc(100dvh - var(--header-h));
     display: flex;
     align-items: center;
-    justify-content: center;
+    /* Was centered, which put a narrow 780px text card floating dead-
+       center over a full-width image -- a single hero photo reads as
+       using the whole viewport far better with text pinned left and the
+       image's own detail (the falling equations, the temple silhouette)
+       visible and doing work on the right, matching the left-text /
+       right-image balance every other slab on this site already uses. */
+    justify-content: flex-start;
     overflow: hidden;
 }
 .slab-first::after {
     content: '';
     position: absolute;
     inset: 0;
-    /* Darkened enough that the photo's own dark-olive cast converges on
-       the same neutral near-black used by the dividers/contact/footer,
-       instead of visibly clashing with it. */
-    background: rgba(0, 0, 0, 0.74);
+    /* Two layers instead of one flat/linear scrim: a radial pool of dark
+       anchored behind the text card (guarantees contrast there no matter
+       what's in the photo underneath) plus a much lighter overall wash
+       that clears up fast moving right, so the image's own detail --
+       the falling equations, the temple -- reads clearly across most of
+       the frame instead of being dimmed everywhere by the same amount. */
+    background:
+        radial-gradient(ellipse 700px 560px at 0% 48%, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.62) 45%, rgba(0,0,0,0) 78%),
+        linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.04) 55%);
     z-index: 1;
 }
 .slab-bg-image { position: absolute; inset: 0; z-index: 0; }
@@ -675,7 +738,12 @@ a   { text-decoration: none; color: inherit; }
     position: relative;
     z-index: 2;
     max-width: 780px;
-    padding: 5rem 2rem;
+    /* Was 5rem top/bottom -- on shorter laptop viewports that padding
+       plus the vertically-centered text block's own height added up to
+       taller than calc(100vh - header), pushing the last line (hero-note)
+       past the fold and forcing a scroll to see the rest of the hero.
+       This is meant to be a single fully-visible slab, not a scroll. */
+    padding: 2rem 2rem;
     text-align: left;
 }
 .slab-first .slab-text .exam-tag {
@@ -714,7 +782,7 @@ a   { text-decoration: none; color: inherit; }
     font-family: var(--font-sans);
     font-size: 0.78rem;
     color: rgba(255,255,255,0.55);
-    margin-top: 2rem !important;
+    margin-top: 1.25rem !important;
 }
 
 /* ═══════════════════════════════════════════
@@ -726,8 +794,8 @@ a   { text-decoration: none; color: inherit; }
 ═══════════════════════════════════════════ */
 .slab-divider {
     background: var(--charcoal);
-    padding: 2rem 0;
-    margin: 3rem 0;
+    padding: 1.25rem 0;
+    margin: 1.5rem 0;
 }
 .divider-inner {
     max-width: 820px;
@@ -983,7 +1051,7 @@ a   { text-decoration: none; color: inherit; }
    RESPONSIVE
 ═══════════════════════════════════════════ */
 @media (max-width: 900px) {
-    .slab-first-inner { padding: 3.5rem 1.5rem; }
+    .slab-first-inner { padding: 1.75rem 1.5rem; }
     .slab-inner { grid-template-columns: 1fr; }
     .desktop-nav     { display: none; }
     .topics-dropdown { display: none; }
@@ -995,7 +1063,7 @@ a   { text-decoration: none; color: inherit; }
 
 @media (max-width: 600px) {
     :root { --section-py: 64px; }
-    .slab-first-inner { padding: 2.5rem 1.25rem; }
+    .slab-first-inner { padding: 1.5rem 1.25rem; }
     .slab-first .slab-text h1 { font-size: 1.5rem; }
     .footer-inner { grid-template-columns: 1fr; }
     .back-to-top { bottom: 1.25rem; right: 1.25rem; }

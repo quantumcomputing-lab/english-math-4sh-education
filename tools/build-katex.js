@@ -53,16 +53,27 @@ const katexOptions = {
 
 let html = fs.readFileSync(INDEX_HTML, 'utf8');
 
-const SLAB_START = '<section class="slab topic-slab"';
+// Was a fixed '<section class="slab topic-slab"' string match, keyed to
+// every chapter sharing one exact class attribute. Chapters migrated to
+// the newer full-bleed layout (see .slab-full in css/style.css) keep the
+// same id="topic-N" but no longer carry that literal class string, which
+// silently undercounts (or, worse, once no topic-slab sections are left
+// at all, throws immediately) against the `count !== 35` assertion below.
+// Locating sections by id="topic-N" instead is layout-agnostic -- every
+// chapter section has this regardless of which class variant it's on.
+const TOPIC_ID = /id="topic-\d+"/;
 let cursor = 0;
 let count = 0;
 let formulaCount = 0;
 
 while (true) {
-  const start = html.indexOf(SLAB_START, cursor);
-  if (start === -1) break;
-  const end = html.indexOf('</section>', start);
-  if (end === -1) throw new Error(`Unclosed topic-slab section at offset ${start}`);
+  const idMatch = TOPIC_ID.exec(html.slice(cursor));
+  if (!idMatch) break;
+  const idPos = cursor + idMatch.index;
+  const start = html.lastIndexOf('<section', idPos);
+  if (start === -1) throw new Error(`Could not find opening <section> for ${idMatch[0]} at offset ${idPos}`);
+  const end = html.indexOf('</section>', idPos);
+  if (end === -1) throw new Error(`Unclosed topic section at offset ${start}`);
   const sectionEnd = end + '</section>'.length;
 
   const block = html.slice(start, sectionEnd);
