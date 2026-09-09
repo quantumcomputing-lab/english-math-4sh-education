@@ -1,4 +1,47 @@
-/* english.physics.4sh.education — JS */
+/* english.math.4sh.education — JS */
+
+// ── Shared modal helpers: iOS-safe scroll lock + Tab focus trap ──
+// position:fixed + a negative top offset (not plain overflow:hidden) is
+// required to actually stop the page rubber-band-scrolling behind a
+// fixed overlay on iOS Safari -- overflow:hidden alone doesn't reliably
+// prevent it there. Used by every modal-like UI piece below (mobile nav
+// drawer, consult modal, image lightbox, video modal) instead of each
+// reimplementing its own (previously inconsistent) lock.
+let _scrollLockY = 0;
+function lockBodyScroll() {
+    _scrollLockY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${_scrollLockY}px`;
+    document.body.style.width = '100%';
+}
+function unlockBodyScroll() {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, _scrollLockY);
+}
+
+// Returns a keydown handler that cycles Tab/Shift+Tab within `container`'s
+// focusable elements, so focus can never escape to the page behind an
+// open modal -- add it as a keydown listener on open, remove on close.
+function trapFocus(container) {
+    return function (e) {
+        if (e.key !== 'Tab') return;
+        const focusable = container.querySelectorAll(
+            'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        }
+    };
+}
 
 // ── Hamburger / Mobile Nav ──
 const hamburger  = document.querySelector('.hamburger');
@@ -6,20 +49,23 @@ const mobileNav  = document.getElementById('mobileNav');
 const navOverlay = document.getElementById('navOverlay');
 const navClose   = document.querySelector('.mobile-nav-close');
 const mobileLinks = mobileNav?.querySelectorAll('a') ?? [];
+const mobileNavFocusTrap = mobileNav ? trapFocus(mobileNav) : null;
 
 function openNav() {
     mobileNav.classList.add('open');
     navOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
     hamburger?.setAttribute('aria-expanded', 'true');
     hamburger?.setAttribute('aria-label', 'Close menu');
+    if (mobileNavFocusTrap) document.addEventListener('keydown', mobileNavFocusTrap);
 }
 function closeNav() {
     mobileNav.classList.remove('open');
     navOverlay.classList.remove('open');
-    document.body.style.overflow = '';
+    unlockBodyScroll();
     hamburger?.setAttribute('aria-expanded', 'false');
     hamburger?.setAttribute('aria-label', 'Open menu');
+    if (mobileNavFocusTrap) document.removeEventListener('keydown', mobileNavFocusTrap);
 }
 
 hamburger?.addEventListener('click', () => {
@@ -102,11 +148,7 @@ const mathObserver = new IntersectionObserver((entries) => {
     if (entry.isIntersecting) hydrateMath(entry.target);
   });
 }, { rootMargin: '600px 0px' });
-// .slab-full covers chapters migrated to the newer full-bleed layout
-// (still carries its own <template class="katex-tpl">, just no longer
-// wrapped in .topic-slab) -- hydrateMath() no-ops harmlessly on any
-// section here that has no template, so this is safe to over-select.
-document.querySelectorAll('.topic-slab, .slab-full').forEach(el => mathObserver.observe(el));
+document.querySelectorAll('.slab-full').forEach(el => mathObserver.observe(el));
 
 // Every in-page anchor link (nav, dropdown, footer sitemap) must land on a
 // destination whose math is already hydrated -- otherwise the section's
@@ -183,19 +225,22 @@ document.querySelectorAll('.btn-schedule').forEach(btn => {
     };
 
     let lastFocused = null;
+    const focusTrap = trapFocus(modal);
 
     function openModal() {
         modal.classList.add('open');
         modal.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
+        lockBodyScroll();
         lastFocused = document.activeElement;
         nameInput?.focus();
+        document.addEventListener('keydown', focusTrap);
     }
     function closeModal() {
         modal.classList.remove('open');
         modal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
+        unlockBodyScroll();
         lastFocused?.focus();
+        document.removeEventListener('keydown', focusTrap);
     }
 
     openBtn.addEventListener('click', openModal);
@@ -345,20 +390,23 @@ if (carouselTrack && carouselPrev && carouselNext) {
     const lightboxImg = document.getElementById('lightboxImg');
     const lightboxClose = document.getElementById('lightboxClose');
     let lastFocused = null;
+    const lightboxFocusTrap = trapFocus(lightbox);
 
     function openLightbox(fullSrc, alt) {
         lightboxImg.src = fullSrc;
         lightboxImg.alt = alt || '';
         lightbox.classList.add('open');
         lightbox.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
+        lockBodyScroll();
         lastFocused = document.activeElement;
         lightboxClose.focus();
+        document.addEventListener('keydown', lightboxFocusTrap);
     }
     function closeLightbox() {
         lightbox.classList.remove('open');
         lightbox.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
+        unlockBodyScroll();
+        document.removeEventListener('keydown', lightboxFocusTrap);
         lightboxImg.src = '';
         lastFocused?.focus();
     }
@@ -447,9 +495,9 @@ backToTop?.addEventListener('click', () => {
     let ytApiPromise = null;
     let currentPlayer = null;
     let currentReadyTimeout = null;
-    let scrollLockY = 0;
     let openSessionId = 0;
     let lastFocusedElement = null;
+    const videoModalFocusTrap = trapFocus(modal);
 
     function loadYouTubeApi() {
         if (ytApiPromise) return ytApiPromise;
@@ -488,19 +536,6 @@ backToTop?.addEventListener('click', () => {
             </div>`;
     }
 
-    function lockScroll() {
-        scrollLockY = window.scrollY;
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollLockY}px`;
-        document.body.style.width = '100%';
-    }
-    function unlockScroll() {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollLockY);
-    }
-
     function openVideoModal(ytId, triggerEl) {
         if (!modal.hidden) return;
         const mySession = ++openSessionId;
@@ -508,8 +543,9 @@ backToTop?.addEventListener('click', () => {
         lastFocusedElement = triggerEl || document.activeElement;
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');
-        lockScroll();
+        lockBodyScroll();
         modalClose.focus();
+        document.addEventListener('keydown', videoModalFocusTrap);
 
         if (!ytId || ytId === 'REPLACE_WITH_YOUTUBE_ID') {
             modalFrame.innerHTML = `<div class="video-modal-placeholder">Video coming soon.</div>`;
@@ -556,7 +592,8 @@ backToTop?.addEventListener('click', () => {
         openSessionId++;
         modal.hidden = true;
         modal.setAttribute('aria-hidden', 'true');
-        unlockScroll();
+        unlockBodyScroll();
+        document.removeEventListener('keydown', videoModalFocusTrap);
         if (currentReadyTimeout) { clearTimeout(currentReadyTimeout); currentReadyTimeout = null; }
         if (currentPlayer && typeof currentPlayer.destroy === 'function') {
             currentPlayer.destroy();
