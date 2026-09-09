@@ -169,7 +169,6 @@ document.querySelectorAll('.btn-schedule').forEach(btn => {
 
     const nameInput    = document.getElementById('cf-name');
     const emailInput   = document.getElementById('cf-email');
-    const countrySel   = document.getElementById('cf-country');
     const phoneInput   = document.getElementById('cf-phone');
     const subjectInput = document.getElementById('cf-subject');
     const hpInput      = document.getElementById('cf-hp');
@@ -211,7 +210,6 @@ document.querySelectorAll('.btn-schedule').forEach(btn => {
     }
 
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const DIGITS_RE = /^\d{6,14}$/;
 
     function validate() {
         let ok = true;
@@ -225,9 +223,8 @@ document.querySelectorAll('.btn-schedule').forEach(btn => {
             setError('email', 'Enter a valid email address.');
             ok = false;
         }
-        const phoneDigits = phoneInput.value.trim();
-        if (!DIGITS_RE.test(phoneDigits)) {
-            setError('phone', 'Digits only, 6-14 numbers, no spaces or symbols.');
+        if (!phoneInput.value.trim()) {
+            setError('phone', 'Please enter your phone number.');
             ok = false;
         }
         if (!subjectInput.value.trim()) {
@@ -257,7 +254,7 @@ document.querySelectorAll('.btn-schedule').forEach(btn => {
         const params = new URLSearchParams();
         params.append(ENTRY.name, nameInput.value.trim());
         params.append(ENTRY.email, emailInput.value.trim());
-        params.append(ENTRY.phone, `${countrySel.value} ${phoneInput.value.trim()}`);
+        params.append(ENTRY.phone, phoneInput.value.trim());
         params.append(ENTRY.subject, subjectInput.value.trim());
 
         try {
