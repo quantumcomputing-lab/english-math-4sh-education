@@ -1119,6 +1119,7 @@ a   { text-decoration: none; color: inherit; }
 .hero-note {
     font-family: var(--font-sans);
     font-size: 0.78rem;
+    font-weight: 700;
     color: rgba(255,255,255,0.55);
     margin-top: 1.25rem !important;
 }
