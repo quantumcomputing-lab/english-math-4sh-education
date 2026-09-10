@@ -1472,6 +1472,22 @@ a   { text-decoration: none; color: inherit; }
 .footer-nav, .footer-contact { display: flex; flex-direction: column; gap: 0.6rem; }
 .footer-nav a, .footer-contact a { font-size: 0.875rem; color: #aaa; transition: color var(--transition); overflow-wrap: break-word; }
 .footer-nav a:hover, .footer-contact a:hover { color: #fff; }
+/* Styled to read exactly like the plain footer links above -- it's a
+   copy-to-clipboard button standing in for what used to be a mailto: a,
+   not a distinct UI element. */
+.footer-copy-email {
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: #aaa;
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+    transition: color var(--transition);
+    overflow-wrap: break-word;
+}
+.footer-copy-email:hover { color: #fff; }
 .footer-bottom {
     border-top: 1px solid rgba(255,255,255,0.08);
     text-align: center;
@@ -1513,6 +1529,17 @@ a   { text-decoration: none; color: inherit; }
 .contact-whatsapp .form-note {
     margin-top: 1.5rem;
     text-align: center;
+}
+/* Plain-text email shown above the copy button -- readable and
+   selectable with zero action needed, so the button below is a
+   convenience (one-tap copy) rather than the only way to get the
+   address. */
+.contact-email-display {
+    font-family: var(--font-sans);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #fff;
+    margin: -1.25rem auto 1.75rem;
 }
 
 .form-note { font-family: var(--font-sans); font-size: 0.82rem; color: rgba(255,255,255,0.75); margin-top: 0.5rem; }

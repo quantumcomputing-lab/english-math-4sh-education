@@ -177,12 +177,30 @@ const sectionObserver = new IntersectionObserver((entries) => {
 
 sections.forEach(s => sectionObserver.observe(s));
 
-// ── Schedule-consultation CTA click tracking ──
-document.querySelectorAll('.btn-schedule').forEach(btn => {
-    btn.addEventListener('click', () => {
+// ── Copy-to-clipboard email buttons — replaces mailto: links, which on
+// some Android setups pop an app-chooser listing apps that have nothing
+// to do with email (e.g. a ride-hailing app registering an overly broad
+// intent filter). Copying the address sidesteps OS link/intent
+// resolution entirely, and the address is shown as plain text next to
+// the main CTA so it's usable even without JS or Clipboard API support. ──
+document.querySelectorAll('.js-copy-email').forEach(btn => {
+    const label = btn.querySelector('.js-copy-email-label');
+    const email = btn.dataset.email;
+    const defaultText = label.textContent;
+    let resetTimer = null;
+
+    btn.addEventListener('click', async () => {
         if (typeof gtag === 'function') {
-            gtag('event', 'consultation_mailto_click', { event_category: 'contact', event_label: btn.closest('section')?.id || 'contact' });
+            gtag('event', 'consultation_email_copy', { event_category: 'contact', event_label: btn.closest('section')?.id || 'contact' });
         }
+        try {
+            await navigator.clipboard.writeText(email);
+            label.textContent = 'Copied!';
+        } catch (err) {
+            label.textContent = email; // clipboard unavailable -- at least show the address to copy by hand
+        }
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => { label.textContent = defaultText; }, 2000);
     });
 });
 
