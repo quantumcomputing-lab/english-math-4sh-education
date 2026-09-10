@@ -785,7 +785,7 @@ a   { text-decoration: none; color: inherit; }
 }
 .video-modal-close:hover { background: rgba(255,255,255,0.22); }
 
-.btn-linkedin {
+.btn-cv {
     display: inline-block;
     background: #000;
     color: #fff;
@@ -794,11 +794,191 @@ a   { text-decoration: none; color: inherit; }
     font-weight: 700;
     text-align: center;
     padding: 0.9rem 2rem;
+    border: none;
     border-radius: 4px;
     margin-top: 1.5rem;
+    cursor: pointer;
     transition: background var(--transition);
 }
-.btn-linkedin:hover { background: #222; }
+.btn-cv:hover { background: #222; }
+
+/* ── CV modal — opened from "Connect with me"; a career-journey
+   narrative (timelines + highlight chips), not a resume dump. Same
+   fixed-overlay + hidden-attribute pattern as .video-modal above, but a
+   scrollable paper-toned card instead of fullscreen black, since this is
+   read at length rather than watched. ── */
+.cv-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10,10,10,0.85);
+    padding: 2rem 1.25rem;
+}
+.cv-modal[hidden] { display: none; }
+.cv-modal-card {
+    position: relative;
+    background: var(--bg-alt);
+    border-radius: 10px;
+    max-width: 720px;
+    width: 100%;
+    max-height: 88vh;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+}
+.cv-modal-scroll {
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 2.75rem 2.75rem 2rem;
+}
+.cv-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.06);
+    color: var(--charcoal);
+    font-size: 1.5rem;
+    line-height: 1;
+    border: 1px solid rgba(0,0,0,0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition);
+}
+.cv-modal-close:hover { background: rgba(0,0,0,0.12); }
+
+.cv-header { text-align: center; margin-bottom: 1.75rem; }
+.cv-header h2 {
+    font-family: var(--font-serif);
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--charcoal);
+}
+.cv-tagline {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--crimson);
+    margin-top: 0.4rem;
+}
+.cv-meta {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+}
+.cv-meta a { color: var(--crimson); font-weight: 600; }
+.cv-meta a:hover { text-decoration: underline; }
+
+.cv-section { margin-top: 2rem; }
+.cv-section:first-of-type { margin-top: 0; }
+
+.cv-timeline {
+    list-style: none;
+    margin-top: 0.9rem;
+    border-left: 2px solid rgba(0,0,0,0.08);
+}
+.cv-timeline li {
+    position: relative;
+    padding: 0 0 1.1rem 1.25rem;
+}
+.cv-timeline li:last-child { padding-bottom: 0; }
+.cv-timeline li::before {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: 0.4em;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--crimson);
+}
+.cv-timeline-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+}
+.cv-org {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--charcoal);
+}
+.cv-dates {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+.cv-role {
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    font-style: italic;
+    color: var(--muted);
+    margin-top: 0.15rem;
+}
+.cv-honor { font-style: normal; }
+.cv-highlight {
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    color: var(--body-text);
+    margin-top: 0.35rem;
+}
+
+.cv-chips {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+}
+.cv-chips li {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: var(--charcoal);
+    background: rgba(165,28,48,0.07);
+    border: 1px solid rgba(165,28,48,0.18);
+    border-radius: 100px;
+    padding: 0.45rem 0.9rem;
+}
+
+.cv-details {
+    margin-top: 1rem;
+    font-family: var(--font-sans);
+}
+.cv-details summary {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--crimson);
+    cursor: pointer;
+}
+.cv-details summary:hover { text-decoration: underline; }
+.cv-list {
+    margin: 0.85rem 0 0 1.1em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+.cv-list li {
+    font-family: var(--font-body);
+    font-size: 0.86rem;
+    color: var(--body-text);
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .cv-modal-scroll { padding: 2.25rem 1.5rem 1.5rem; }
+    .cv-header h2 { font-size: 1.4rem; }
+}
 
 /* ── Section label ── */
 .section-label {
@@ -1102,64 +1282,6 @@ a   { text-decoration: none; color: inherit; }
 }
 .lightbox-close:hover { background: rgba(255,255,255,0.2); }
 
-/* ── Consultation request modal — same fixed-overlay pattern as the
-   lightbox above, but a dark card holding the .contact-form (already
-   styled elsewhere in this file for the contact slab's dark background)
-   instead of a bare image. ── */
-.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10,10,10,0.85);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity var(--transition);
-    padding: 2rem 1.25rem;
-}
-.modal.open { opacity: 1; visibility: visible; }
-.modal-card {
-    position: relative;
-    background: var(--bg-dark);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    max-width: 480px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 2.5rem 2rem 2rem;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
-}
-.modal-card h2 {
-    font-family: var(--font-serif);
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--crimson);
-    margin-bottom: 0.75rem;
-}
-.modal-card .whatsapp-lead { margin: 0 0 1.5rem; text-align: left; max-width: none; font-size: 0.95rem; }
-.modal-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-    font-size: 1.5rem;
-    line-height: 1;
-    border: 1px solid rgba(255,255,255,0.25);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background var(--transition);
-}
-.modal-close:hover { background: rgba(255,255,255,0.2); }
-
 /* ── Schedule-consultation CTA — replaces the old WhatsApp button;
    crimson instead of WhatsApp green since it no longer hands off to a
    third-party app. ── */
@@ -1185,29 +1307,6 @@ a   { text-decoration: none; color: inherit; }
     box-shadow: 0 14px 36px rgba(165,28,48,0.42);
 }
 .schedule-icon { width: 26px; height: 26px; flex-shrink: 0; }
-
-/* ── Form field extras: honeypot, inline errors ── */
-.field-error {
-    display: block;
-    font-family: var(--font-sans);
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: #ff8a8a;
-    text-transform: none;
-    letter-spacing: normal;
-    min-height: 1em;
-}
-/* Off-canvas, not display:none -- some bots skip fields hidden that way,
-   but still auto-fill anything present in the DOM. Real visitors never
-   tab into it (tabindex="-1") or see it. */
-.hp-field {
-    position: absolute;
-    left: -9999px;
-    top: -9999px;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-}
 
 @media (max-width: 900px) {
     .carousel-wrap { padding: 0 3rem; }
@@ -1395,8 +1494,8 @@ a   { text-decoration: none; color: inherit; }
 }
 /* ── Click-to-schedule contact slab ──
    A single, deliberate CTA — centered and weighted like a landing-page
-   moment, not a buried link. Opens the consultation modal in place (see
-   .modal / .btn-schedule above) instead of handing off to WhatsApp. */
+   moment, not a buried link. Hands off to a mailto: link (see
+   .btn-schedule above) rather than a form or a third-party platform. */
 .contact-whatsapp {
     text-align: center;
 }
@@ -1416,54 +1515,7 @@ a   { text-decoration: none; color: inherit; }
     text-align: center;
 }
 
-.contact-form { display: flex; flex-direction: column; gap: 1rem; }
-.contact-form label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    font-family: var(--font-sans);
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.55);
-}
-.contact-form input,
-.contact-form textarea {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 4px;
-    padding: 0.75rem 1rem;
-    font-family: var(--font-body);
-    font-size: 1rem;
-    color: #fff;
-    outline: none;
-    transition: border-color var(--transition);
-    width: 100%;
-}
-.contact-form input:focus,
-.contact-form textarea:focus { border-color: var(--crimson); }
-.contact-form input::placeholder,
-.contact-form textarea::placeholder { color: rgba(255,255,255,0.25); }
-.contact-form textarea { resize: vertical; min-height: 90px; }
-.btn-submit {
-    background: var(--crimson);
-    color: #fff;
-    border: none;
-    padding: 0.9rem 2rem;
-    font-family: var(--font-sans);
-    font-size: 1.05rem;
-    font-weight: 600;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background var(--transition);
-    margin-top: 0.5rem;
-    align-self: flex-start;
-}
-.btn-submit:hover { background: var(--crimson-dk); }
-.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 .form-note { font-family: var(--font-sans); font-size: 0.82rem; color: rgba(255,255,255,0.75); margin-top: 0.5rem; }
-.form-success { font-family: var(--font-sans); font-size: 1.1rem; color: rgba(255,255,255,0.85); padding: 1.5rem 0; }
 .contact-mobile { color: var(--crimson) !important; font-weight: 700 !important; }
 
 /* ═══════════════════════════════════════════
@@ -1505,5 +1557,4 @@ a   { text-decoration: none; color: inherit; }
     .back-to-top { bottom: 1.25rem; right: 1.25rem; }
     .btn-schedule { font-size: 0.95rem; padding: 1rem 1.75rem; white-space: normal; text-align: left; }
     .schedule-icon { width: 22px; height: 22px; }
-    .modal-card { padding: 2.25rem 1.5rem 1.75rem; }
 }

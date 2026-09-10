@@ -259,9 +259,8 @@
                         <li>Master of Science in Engineering Sciences — Harvard University <span class="cred-note">(Graduate Student Fellowship)</span></li>
                         <li>B.Tech (Hons.) in Electronics &amp; Electrical Communication Engineering — IIT Kharagpur <span class="cred-note">(Best Thesis Award)</span></li>
                         <li>MBA — Indian School of Business <span class="cred-note">(Young Leader Award)</span></li>
-                        <li>CFA (Chartered Financial Analyst)</li>
                     </ul>
-                    <a href="https://www.linkedin.com/in/samudra-dasgupta/" target="_blank" rel="noopener" class="btn-linkedin">Connect with me</a>
+                    <button type="button" class="btn-cv" id="openCvModal">Connect with me</button>
                 </div>
                 <div class="slab-image founder-photo">
                     <button type="button" class="video-card" id="founderVideoCard" aria-label="Play video: meet Dr. Samudra Dasgupta">
@@ -702,52 +701,13 @@
         <div class="contact-inner contact-whatsapp">
             <h2 class="fade-in">Accelerate your career. Get the world-class guidance you deserve. Start today.</h2>
             <p class="whatsapp-lead fade-in">Contact Dr. Samudra Dasgupta directly</p>
-            <button type="button" class="btn-schedule fade-in" id="openConsultModal">
+            <a class="btn-schedule fade-in" href="mailto:support@4sh.education?subject=Video%20Consultation%20Request">
                 <svg class="schedule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5.5" width="13" height="13" rx="2"/><path d="M15.5 10.5 21 7v10l-5.5-3.5"/></svg>
                 <span>Schedule a video consultation today.</span>
-            </button>
+            </a>
             <p class="form-note">State Boards &middot; CBSE &middot; ICSE &middot; Engineering &middot; Medical &middot; STEM PhD</p>
         </div>
     </section>
-
-    <!-- Consultation request modal -- opens in place, no new tab, no
-         window.open() popup. Submits to a real Google Form in the
-         background (hidden fetch, no-cors) so responses land in the
-         linked Sheet; the page never navigates away. -->
-    <div class="modal" id="consultModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="consultModalTitle">
-        <div class="modal-card">
-            <button type="button" class="modal-close" id="consultModalClose" aria-label="Close">&times;</button>
-            <h2 id="consultModalTitle">Schedule a Video Consultation</h2>
-            <p class="whatsapp-lead">Tell us a bit about what your academic goal.</p>
-            <form class="contact-form" id="consultForm" novalidate>
-                <label for="cf-name">Name
-                    <input type="text" id="cf-name" name="name" autocomplete="name" required>
-                    <span class="field-error" id="cf-name-error"></span>
-                </label>
-                <label for="cf-email">Email
-                    <input type="email" id="cf-email" name="email" autocomplete="email" required>
-                    <span class="field-error" id="cf-email-error"></span>
-                </label>
-                <label for="cf-phone">Phone (include your country code)
-                    <input type="tel" id="cf-phone" name="phone" autocomplete="tel" required>
-                    <span class="field-error" id="cf-phone-error"></span>
-                </label>
-                <label for="cf-subject">Subject / Help Required
-                    <textarea id="cf-subject" name="subject" required></textarea>
-                    <span class="field-error" id="cf-subject-error"></span>
-                </label>
-                <!-- Honeypot -- left visually off-canvas, never shown to a real
-                     visitor; bots that auto-fill every field trip this and get
-                     silently dropped instead of submitted. -->
-                <label class="hp-field" aria-hidden="true">
-                    Leave this field blank
-                    <input type="text" id="cf-hp" name="website" tabindex="-1" autocomplete="off">
-                </label>
-                <button type="submit" class="btn-submit" id="cf-submit">Submit Interest</button>
-                <p class="form-note" id="cf-status" role="status" aria-live="polite"></p>
-            </form>
-        </div>
-    </div>
 
     <!-- ═══════════════════════════════════════
          BOOK PREVIEW CAROUSEL
@@ -842,6 +802,133 @@
     <div class="video-modal" id="videoModal" role="dialog" aria-modal="true" aria-hidden="true" hidden>
         <button type="button" class="video-modal-close" id="videoModalClose" aria-label="Close video">&times;</button>
         <div class="video-modal-frame" id="videoModalFrame"></div>
+    </div>
+
+    <!-- CV modal -- opened in place from the founder section's "Connect
+         with me" button. No new tab, no download; a career-journey
+         narrative (education / experience timelines, then a handful of
+         flagship research &amp; award highlights with the full lists
+         tucked behind native <details> disclosure) rather than a dense
+         resume dump. Same focus-trap + lockBodyScroll pattern as the
+         video modal above. -->
+    <div class="cv-modal" id="cvModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="cvModalTitle" hidden>
+        <div class="cv-modal-card">
+            <button type="button" class="cv-modal-close" id="cvModalClose" aria-label="Close">&times;</button>
+            <div class="cv-modal-scroll">
+                <header class="cv-header">
+                    <h2 id="cvModalTitle">Dr. Samudra Dasgupta</h2>
+                    <p class="cv-tagline">Career Strategy &middot; Resilience Training &middot; STEM PhD Research</p>
+                    <p class="cv-meta">Kolkata, India &nbsp;&middot;&nbsp; <a href="https://www.linkedin.com/in/samudra-dasgupta/" target="_blank" rel="noopener">LinkedIn</a></p>
+                </header>
+
+                <section class="cv-section">
+                    <span class="section-label">Education</span>
+                    <ol class="cv-timeline">
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">Bredesen Center, University of Tennessee</span><span class="cv-dates">2020&ndash;2024</span></div>
+                            <p class="cv-role">Ph.D., Quantum Computing</p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">CFA Institute</span><span class="cv-dates">2018</span></div>
+                            <p class="cv-role">Chartered Financial Analyst (CFA)</p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">Indian School of Business</span><span class="cv-dates">2011&ndash;2012</span></div>
+                            <p class="cv-role">Post Graduate Diploma in Management <span class="cv-honor">&mdash; Young Leader Award</span></p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">Harvard University</span><span class="cv-dates">2006&ndash;2008</span></div>
+                            <p class="cv-role">M.S., Engineering Sciences <span class="cv-honor">&mdash; Graduate Student Fellowship</span></p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">IIT Kharagpur</span><span class="cv-dates">2002&ndash;2006</span></div>
+                            <p class="cv-role">B.Tech. (Hons.), Electronics &amp; Electrical Communication Engineering <span class="cv-honor">&mdash; Best Thesis Award</span></p>
+                        </li>
+                    </ol>
+                </section>
+
+                <section class="cv-section">
+                    <span class="section-label">Career Journey</span>
+                    <ol class="cv-timeline">
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">4sh Education</span><span class="cv-dates">2025&ndash;current</span></div>
+                            <p class="cv-role">Founder</p>
+                            <p class="cv-highlight">Coach for JEE Advanced and Olympiad-level Mathematics and Physics, mental resilience training for teenagers, and career strategy / study-abroad guidance.</p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">Meta</span><span class="cv-dates">2024&ndash;2025</span></div>
+                            <p class="cv-role">Data Scientist, Product</p>
+                            <p class="cv-highlight">Drove privacy-protection initiatives across Meta&rsquo;s portfolio of products.</p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">Goldman Sachs</span><span class="cv-dates">2018&ndash;2019</span></div>
+                            <p class="cv-role">Vice President, Liquidity Risk</p>
+                            <p class="cv-highlight">Facilitated Liquidity Policy Group meetings chaired by the global Treasurer; defended model assumptions.</p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">McKinsey &amp; Company</span><span class="cv-dates">2012&ndash;2018</span></div>
+                            <p class="cv-role">Engagement Manager, Banking Practice</p>
+                            <p class="cv-highlight">Supervised 3&ndash;15 member project teams across strategy, revenue acceleration, cost reduction, and risk management.</p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">Bank of America</span><span class="cv-dates">2010&ndash;2011</span></div>
+                            <p class="cv-role">Assistant Vice President, Corporate Investments Group</p>
+                            <p class="cv-highlight">Cut risk-sensitivity computation time for a $400bn mortgage book from ~12 hours to ~30 minutes using k-means clustering.</p>
+                        </li>
+                        <li>
+                            <div class="cv-timeline-head"><span class="cv-org">Higher Moment Capital</span><span class="cv-dates">2008&ndash;2009</span></div>
+                            <p class="cv-role">Research Analyst, Quantitative Hedge Fund</p>
+                            <p class="cv-highlight">Designed high Sharpe-ratio trading strategies and volatility estimators that outperformed GARCH/VIX benchmarks.</p>
+                        </li>
+                    </ol>
+                </section>
+
+                <section class="cv-section">
+                    <span class="section-label">Research &amp; Recognition</span>
+                    <ul class="cv-chips">
+                        <li>11 peer-reviewed publications in quantum computing (ACM, IEEE, SPIE)</li>
+                        <li>Best Paper Award &mdash; IEEE QCE, 2020</li>
+                        <li>Director&rsquo;s Award &mdash; ORNL Quantum Science Center, 2021</li>
+                        <li>Harvard Graduate Student Fellowship</li>
+                        <li>All-India Rank 149, IIT-JEE</li>
+                    </ul>
+
+                    <details class="cv-details">
+                        <summary>All 11 publications</summary>
+                        <ol class="cv-list">
+                            <li>Dasgupta, S. and Humble, T.S. &mdash; <em>Impact of unreliable devices on stability of quantum computations</em> &mdash; ACM Transactions on Quantum Computing, 2024.</li>
+                            <li>Dasgupta, S. and Humble, T.S. &mdash; <em>Improving probabilistic error cancellation in the presence of nonstationary noise</em> &mdash; IEEE Transactions on Quantum Engineering, 2024.</li>
+                            <li>Dasgupta, S., Humble, T.S., and Danageozian, A. &mdash; <em>Adaptive mitigation of time-varying quantum noise</em> &mdash; IEEE International Conference on Quantum Computing and Engineering, 2023.</li>
+                            <li>Dasgupta, S. and Humble, T.S. &mdash; <em>Reliable devices yield stable quantum computations</em> &mdash; IEEE International Conference on Quantum Computing and Engineering, 2023.</li>
+                            <li>Dasgupta, S. and Humble, T.S. &mdash; <em>Adaptive stabilization of quantum circuits executed on unstable devices</em> &mdash; IEEE International Conference on Quantum Computing and Engineering, 2022.</li>
+                            <li>Dasgupta, S. and Humble, T.S. &mdash; <em>Assessing the stability of noisy quantum computation</em> &mdash; SPIE Annual Conference on Quantum Communications and Quantum Imaging, 2022.</li>
+                            <li>Dasgupta, S. and Humble, T.S. &mdash; <em>Characterizing the stability of nisq devices</em> &mdash; IEEE International Conference on Quantum Computing and Engineering, 2020.</li>
+                            <li>Dasgupta, S. and Humble, T.S. &mdash; <em>Reproducibility in quantum computing</em> &mdash; IEEE Computer Society Annual Symposium on VLSI, 2021.</li>
+                            <li>Dasgupta, S. &mdash; <em>Stochastic Thresholding: An approach to Estimator Optimization via Fisher Information Maximization</em> &mdash; IEEE Advanced International Conference on Telecommunications, 2006.</li>
+                            <li>Dasgupta, S., Sarkar, S., and Nair, J. &mdash; <em>Amplitude estimation of a sinusoid buried in heavy noise using stochastic resonance</em> &mdash; Proceedings of the Annual IEEE India Conference, 2004.</li>
+                            <li>Dasgupta, S. and Nair, J. &mdash; <em>Performance of Fixed-point Analysis for IEEE 802.11 compliant WLAN</em> &mdash; Proceedings of the Annual IEEE India Conference, 2005.</li>
+                        </ol>
+                    </details>
+
+                    <details class="cv-details">
+                        <summary>All awards &amp; honors</summary>
+                        <ul class="cv-list">
+                            <li>Chair, Optimization Track in Quantum Algorithms &mdash; IEEE QCE, Seattle, WA, 2023</li>
+                            <li>Best Poster Award &mdash; Quantum Computing User Forum, ORNL, TN, 2023</li>
+                            <li>Director&rsquo;s Award &mdash; Quantum Science Center poster competition, ORNL, TN, 2021</li>
+                            <li>Best Paper Award (benchmarking track) &mdash; IEEE QCE, Boulder, CO, 2020</li>
+                            <li>ISB Young Leader Award; ISB Citibank Scholarship; ISB Merit Scholarship &mdash; 2011&ndash;2012</li>
+                            <li>Harvard Graduate Student Fellowship; Dudley Athletics Fellowship &mdash; 2006&ndash;2008</li>
+                            <li>Best Undergraduate Thesis &mdash; IIT Kharagpur, 2006</li>
+                            <li>2nd place, Annual All India IEEE Student Paper competition, 2005</li>
+                            <li>Elected director of the Academic Affairs Council (voted by a batch of 573 students)</li>
+                            <li>All India Rank 149 in IIT-JEE</li>
+                            <li>City topper, ISC Board Exam</li>
+                        </ul>
+                    </details>
+                </section>
+            </div>
+        </div>
     </div>
 
     <!-- Google Analytics -- deferred until after the load event. gtag.js is
