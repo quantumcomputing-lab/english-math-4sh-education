@@ -494,20 +494,23 @@ backToTop?.addEventListener('click', () => {
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeVideoModal(); });
 })();
 
-// ── Founder CV modal — "Connect with me" opens a career-journey summary
-//    in place instead of handing off to LinkedIn. Same open/close pattern
-//    as the video modal above, minus the YouTube plumbing. ──
+// ── Founder CV modal — "Connect with me" (About Me) and "Dr. Samudra
+//    Dasgupta" (contact slab) both open the same career-journey summary
+//    in place instead of handing off to LinkedIn. Class-based, not a
+//    single id, since there are now two independent trigger elements on
+//    the page. Same open/close pattern as the video modal above, minus
+//    the YouTube plumbing. ──
 (function () {
-    const trigger = document.getElementById('openCvModal');
+    const triggers = document.querySelectorAll('.js-open-cv');
     const modal = document.getElementById('cvModal');
     const modalClose = document.getElementById('cvModalClose');
-    if (!trigger || !modal || !modalClose) return;
+    if (!triggers.length || !modal || !modalClose) return;
 
     let lastFocusedElement = null;
     const cvModalFocusTrap = trapFocus(modal);
 
-    function openCvModal() {
-        lastFocusedElement = trigger;
+    function openCvModal(triggerEl) {
+        lastFocusedElement = triggerEl;
         modal.hidden = false;
         modal.setAttribute('aria-hidden', 'false');
         lockBodyScroll();
@@ -523,7 +526,9 @@ backToTop?.addEventListener('click', () => {
         lastFocusedElement = null;
     }
 
-    trigger.addEventListener('click', openCvModal);
+    triggers.forEach(trigger => {
+        trigger.addEventListener('click', () => openCvModal(trigger));
+    });
     modalClose.addEventListener('click', closeCvModal);
     modal.addEventListener('click', e => { if (e.target === modal) closeCvModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeCvModal(); });
