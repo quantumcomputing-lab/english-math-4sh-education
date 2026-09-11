@@ -4,7 +4,8 @@
   "private": true,
   "description": "Build tooling only -- the shipped site is plain static HTML/CSS/JS in the repo root.",
   "scripts": {
-    "build": "node tools/build-katex.js && node tools/build-css.js"
+    "build": "node tools/build-katex.js && node tools/build-css.js",
+    "build:practice": "node tools/build-practice-content.js"
   },
   "repository": {
     "type": "git",

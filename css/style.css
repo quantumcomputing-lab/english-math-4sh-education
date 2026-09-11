@@ -536,6 +536,34 @@ a   { text-decoration: none; color: inherit; }
 }
 .btn-chapter-cta:hover { background: var(--dark-red-dk); }
 
+/* Chapters that carry two chapter-CTA buttons side by side (e.g. a
+   "Practise Now" button next to the crash-course button). The two
+   buttons must ALWAYS render at exactly the same width and height,
+   no matter how their text changes — hence fixed width/height here
+   instead of the usual width:fit-content, with flex centering the
+   text inside each box. Do not let one button's size drift from the
+   other's when editing copy. */
+.chapter-cta-row {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2rem 0 0;
+    flex-wrap: wrap;
+}
+.slab-inner-full .chapter-cta-row .btn-chapter-cta {
+    width: 280px;
+    /* No fixed height: align-items:stretch on the row makes both buttons
+       match whichever is taller, so the box always fits its own text
+       instead of a guessed height clipping/overflowing it. */
+    margin: 0;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
 .slab .slab-text { min-width: 0; }
 .slab .slab-text h2 {
     font-family: var(--font-serif);
@@ -1600,4 +1628,198 @@ a   { text-decoration: none; color: inherit; }
     .back-to-top { bottom: 1.25rem; right: 1.25rem; }
     .btn-schedule { font-size: 0.95rem; padding: 1rem 1.75rem; white-space: normal; text-align: left; }
     .schedule-icon { width: 22px; height: 22px; }
+}
+
+/* ═══════════════════════════════════════════
+   Quadratic Equations practice page
+═══════════════════════════════════════════ */
+
+.practice-hero {
+    background: var(--bg-dark);
+    color: #fff;
+    padding-top: calc(var(--header-h) + 3.5rem);
+}
+.practice-hero-inner { max-width: var(--max-w); margin: 0 auto; padding: 0 2rem; }
+.practice-hero .exam-tag { color: #e58a98; }
+.practice-hero h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 1.25rem;
+}
+.practice-hero > .practice-hero-inner > p {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,.88);
+    max-width: 760px;
+    margin-bottom: 1rem;
+}
+
+.hero-formulas {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,.14);
+}
+.hero-formulas .section-label { color: #e58a98; }
+.hero-formula-list { list-style: none; display: flex; flex-direction: column; gap: 1.5rem; }
+.hero-formula-list li { font-family: var(--font-body); font-size: 1.02rem; line-height: 1.75; color: rgba(255,255,255,.85); }
+.hero-formula-list strong { color: #fff; font-family: var(--font-sans); font-size: .95rem; letter-spacing: .01em; display: block; margin-bottom: .35rem; }
+.hero-formula-list .katex-display { margin: .75rem 0; }
+.hero-formula-sublist { list-style: none; margin-top: .5rem; display: flex; flex-direction: column; gap: .35rem; }
+.hero-formula-sublist li { padding-left: 1.1em; position: relative; }
+.hero-formula-sublist li::before { content: "\2013"; position: absolute; left: 0; color: #e58a98; }
+
+/* Inline diagrams reused inside both the (dark) hero and the (light) modal
+   content -- text/stroke colours come from currentColor plus two semantic
+   classes below, never hardcoded per-diagram, so one diagram works in
+   both contexts. */
+/* TikZ \bookfigure diagrams, converted at build time (see
+   tools/build-practice-content.js) to inline SVG geometry plus
+   absolutely-positioned HTML label overlays -- SVG <text> can't host
+   KaTeX's HTML+CSS box model, so labels are real HTML, not SVG text. */
+.book-diagram { position: relative; margin: 1.5rem auto; max-width: 420px; width: 100%; color: currentColor; }
+.book-diagram svg { display: block; width: 100%; height: auto; overflow: visible; }
+.book-diagram svg .diagram-neg { stroke: var(--crimson); fill: var(--crimson); }
+.diagram-label {
+    position: absolute;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    line-height: 1.3;
+    white-space: nowrap;
+    color: currentColor;
+}
+.diagram-label-neg { color: var(--crimson); font-weight: 600; }
+.diagram-label .katex { font-size: 1em; }
+.book-figure { margin: 1.5rem 0; text-align: center; }
+.book-figure figcaption { font-family: var(--font-sans); font-size: 0.85rem; font-style: italic; color: var(--muted); margin-top: 0.5rem; }
+.slab-dark .book-figure figcaption { color: rgba(255, 255, 255, 0.65); }
+
+/* ── How this works + the 51-row practice grid ── */
+.practice-intro { background: var(--bg-alt); }
+.practice-intro-inner { max-width: var(--max-w); margin: 0 auto; padding: 0 2rem; text-align: center; }
+.practice-intro h2 { margin-bottom: .75rem; }
+.practice-intro p { max-width: 680px; margin: 0 auto; color: var(--muted); font-size: 1.02rem; line-height: 1.75; }
+
+.practice-grid-section { padding: var(--section-py) 0; }
+.practice-grid-inner { max-width: var(--max-w); margin: 0 auto; padding: 0 2rem; }
+
+.practice-grid-head, .practice-row {
+    display: grid;
+    grid-template-columns: 110px repeat(4, 1fr);
+    gap: .75rem;
+    align-items: stretch;
+}
+.practice-grid-head {
+    font-family: var(--font-sans);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 0 .75rem;
+    border-bottom: 1px solid rgba(0,0,0,.1);
+    margin-bottom: .5rem;
+}
+.practice-row + .practice-row { margin-top: .6rem; }
+.practice-num {
+    display: flex;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: .92rem;
+    color: var(--charcoal);
+}
+.practice-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--charcoal);
+    background: var(--bg-alt);
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 6px;
+    padding: .85rem .75rem;
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+.practice-card:hover, .practice-card:focus-visible {
+    border-color: var(--crimson);
+    background: #fff;
+    transform: translateY(-2px);
+}
+.practice-card-pending {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: .8rem;
+    color: var(--muted);
+    opacity: .55;
+    background: var(--bg-alt);
+    border: 1px dashed rgba(0,0,0,.12);
+    border-radius: 6px;
+    padding: .85rem .75rem;
+}
+
+@media (max-width: 900px) {
+    .practice-grid-head { display: none; }
+    .practice-row {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: "num num" "q q" "h1 h2" "s s";
+        border: 1px solid rgba(0,0,0,.08);
+        border-radius: 8px;
+        padding: .85rem;
+    }
+    .practice-row + .practice-row { margin-top: 1rem; }
+    .practice-num { grid-area: num; margin-bottom: .5rem; }
+    .practice-row > .practice-card:nth-of-type(1), .practice-row > .practice-card-pending:nth-of-type(1) { grid-area: q; }
+    .practice-row > .practice-card:nth-of-type(2), .practice-row > .practice-card-pending:nth-of-type(2) { grid-area: h1; }
+    .practice-row > .practice-card:nth-of-type(3), .practice-row > .practice-card-pending:nth-of-type(3) { grid-area: h2; }
+    .practice-row > .practice-card:nth-of-type(4), .practice-row > .practice-card-pending:nth-of-type(4) { grid-area: s; }
+}
+
+/* ── Shared reveal modal (same open/close pattern as #cvModal) ── */
+.practice-modal { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; background: rgba(10,10,10,.85); padding: 2rem 1.25rem; }
+.practice-modal[hidden] { display: none; }
+.practice-modal-card { position: relative; background: var(--bg-alt); border-radius: 10px; max-width: 720px; width: 100%; max-height: 88vh; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+.practice-modal-scroll { max-height: 88vh; overflow-y: auto; padding: 2.75rem 2.75rem 2rem; }
+.practice-modal-close { position: absolute; top: 1rem; right: 1rem; z-index: 1; width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,.06); color: var(--charcoal); font-size: 1.5rem; line-height: 1; border: 1px solid rgba(0,0,0,.1); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background var(--transition); }
+.practice-modal-close:hover { background: rgba(0,0,0,.12); }
+.practice-modal-title { font-family: var(--font-sans); font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--crimson); margin-bottom: 1.25rem; }
+.practice-modal-body { font-family: var(--font-body); font-size: 1rem; line-height: 1.8; color: var(--body-text); }
+.practice-modal-body .katex-display { overflow-x: auto; overflow-y: hidden; margin: 1.1em 0; }
+.practice-modal-body p { margin-bottom: 1rem; }
+.practice-modal-body ul, .practice-modal-body ol { margin: 0 0 1rem 1.2em; display: flex; flex-direction: column; gap: .6rem; }
+@media (max-width: 600px) { .practice-modal-scroll { padding: 2.25rem 1.5rem 1.5rem; } }
+
+/* Book's own "Understand the problem" callout, recoloured to this site's
+   crimson instead of the book's spacetime-blue. */
+.understand-box { border-left: 2px solid var(--crimson); padding-left: .9rem; margin: 1.25rem 0; }
+.understand-box .understand-label { display: block; font-family: var(--font-sans); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--crimson); margin-bottom: .4rem; }
+
+/* Level-2 hint "fork diagram": a vertical sequence of worked-solution
+   steps with fill-in-the-blank slots, connected by a down arrow -- never
+   prose about the approach, an actual skeleton the student completes. */
+.fork-diagram { display: flex; flex-direction: column; align-items: center; gap: 0; text-align: center; }
+.fork-step { padding: .5rem 0; color: var(--muted); font-size: .95rem; }
+/* Drawn (not a text glyph) so it can be genuinely thick regardless of
+   font rendering: a solid stem plus a solid triangle head. */
+.fork-arrow { position: relative; width: 5px; height: 2rem; background: var(--crimson); margin: .5rem auto; border-radius: 2px; }
+.fork-arrow::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -1px;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 14px solid var(--crimson);
 }
