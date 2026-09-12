@@ -1468,6 +1468,13 @@ a   { text-decoration: none; color: inherit; }
     display: block;
     margin-bottom: 0.75rem;
 }
+.footer-logo-sub {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #aaa;
+    letter-spacing: 0.02em;
+}
 .footer-tagline {
     font-size: 0.875rem;
     color: #888;
