@@ -12,6 +12,8 @@
     --crimson-dk:  #8C1829;
     --dark-red:    #8B1E1E;
     --dark-red-dk: #6B1515;
+    --dark-orange:    #B5560C;
+    --dark-orange-dk: #8F4409;
     --charcoal:    #1E1E1E;
     --body-text:   #2D2D2D;
     --muted:       #666666;
@@ -1318,7 +1320,7 @@ a   { text-decoration: none; color: inherit; }
     display: inline-flex;
     align-items: center;
     gap: 0.85rem;
-    background: var(--crimson);
+    background: var(--dark-orange);
     color: #fff;
     font-family: var(--font-sans);
     font-size: 1.1rem;
@@ -1327,13 +1329,13 @@ a   { text-decoration: none; color: inherit; }
     border: none;
     border-radius: 50px;
     cursor: pointer;
-    box-shadow: 0 10px 28px rgba(165,28,48,0.32);
+    box-shadow: 0 10px 28px rgba(181,86,12,0.32);
     transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
 }
 .btn-schedule:hover {
-    background: var(--crimson-dk);
+    background: var(--dark-orange-dk);
     transform: translateY(-2px);
-    box-shadow: 0 14px 36px rgba(165,28,48,0.42);
+    box-shadow: 0 14px 36px rgba(181,86,12,0.42);
 }
 .schedule-icon { width: 26px; height: 26px; flex-shrink: 0; }
 
@@ -1501,22 +1503,42 @@ a   { text-decoration: none; color: inherit; }
 .footer-nav, .footer-contact { display: flex; flex-direction: column; gap: 0.6rem; }
 .footer-nav a, .footer-contact a { font-size: 0.875rem; color: #aaa; transition: color var(--transition); overflow-wrap: break-word; }
 .footer-nav a:hover, .footer-contact a:hover { color: #fff; }
-/* Styled to read exactly like the plain footer links above -- it's a
-   copy-to-clipboard button standing in for what used to be a mailto: a,
-   not a distinct UI element. */
-.footer-copy-email {
-    font-family: inherit;
-    font-size: 0.875rem;
-    color: #aaa;
-    background: none;
+/* Both footer contact CTAs -- copy-email and WhatsApp -- share the same
+   small pill shape as the main contact slab's "Copy email address"
+   button (.btn-schedule), icon+label centered as one unit, so the two
+   read as a matched pair instead of one plain-text row and one button.
+   WhatsApp keeps its old green from the contact-slab CTA it was
+   revived from; copy-email reuses the site's crimson. */
+.footer-contact .footer-copy-email,
+.footer-contact .btn-whatsapp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1;
+    gap: 0.6rem;
+    /* Fixed (not shrink-to-fit) so both buttons are ALWAYS the same
+       size regardless of label length -- sized to comfortably fit the
+       longer "Copy email address" label. */
+    width: 216px;
+    align-self: flex-start;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.6rem 1.25rem;
+    border-radius: 50px;
     border: none;
-    padding: 0;
-    text-align: left;
     cursor: pointer;
-    transition: color var(--transition);
-    overflow-wrap: break-word;
+    transition: background var(--transition), transform var(--transition);
 }
-.footer-copy-email:hover { color: #fff; }
+.footer-contact .footer-copy-email span,
+.footer-contact .btn-whatsapp span { line-height: 1; }
+.footer-contact .footer-copy-email { background: var(--dark-orange); }
+.footer-contact .footer-copy-email:hover { background: var(--dark-orange-dk); color: #fff; transform: translateY(-2px); }
+.footer-contact .btn-whatsapp { background: #25D366; }
+.footer-contact .btn-whatsapp:hover { background: #1fb958; color: #fff; transform: translateY(-2px); }
+.footer-contact .whatsapp-icon, .footer-contact .footer-copy-icon { width: 18px; height: 18px; flex-shrink: 0; }
 .footer-bottom {
     border-top: 1px solid rgba(255,255,255,0.08);
     text-align: center;
